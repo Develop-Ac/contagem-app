@@ -288,16 +288,6 @@ function renderItens(itens) {
             <td class="mdl-data-table__cell--non-numeric">
                 <div class="produto-info">
                     <div class="produto-nome">${item.desc_produto}</div>
-                    <div class="produto-detalhes">
-                        <strong>Cód:</strong> ${item.cod_produto} | 
-                        <strong>Marca:</strong> ${item.mar_descricao || 'N/A'} | 
-                        <strong>Ref:</strong> ${item.ref_fabricante || 'N/A'}
-                    </div>
-                    <div class="produto-detalhes">
-                        <strong>Estoque:</strong> ${item.estoque} | 
-                        <strong>Reserva:</strong> ${item.reserva} | 
-                        <strong>Unidade:</strong> ${item.unidade}
-                    </div>
                 </div>
             </td>
             <td class="mdl-data-table__cell--non-numeric">

@@ -7,7 +7,7 @@
 
 body {
     font-family: 'Roboto', Arial, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #ffffff;
     min-height: 100vh;
 }
 
@@ -17,8 +17,9 @@ body {
 }
 
 .mdl-layout__header {
-    background: linear-gradient(135deg, #3f51b5 0%, #5c6bc0 100%);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    background: linear-gradient(90deg, #3067C5 0%, #B6C947 100%);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    border-radius: 0;
 }
 
 .mdl-layout__content {
@@ -56,18 +57,20 @@ body {
 .login-card {
     width: 100%;
     max-width: 400px;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 16px;
+    background: #ffffff;
+    border: 2px solid #f5f5f5;
+    border-radius: 12px;
     overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     animation: slideInUp 0.6s ease-out;
 }
 
 .login-card .mdl-card__title {
-    background: linear-gradient(135deg, #3f51b5 0%, #5c6bc0 100%);
+    background: linear-gradient(90deg, #3067C5 0%, #B6C947 100%);
     color: white;
     padding: 32px 24px;
     text-align: center;
+    border-radius: 0;
 }
 
 .login-card .mdl-card__title-text {
@@ -95,11 +98,12 @@ body {
     border-radius: 8px;
     font-size: 16px;
     font-weight: 500;
-    background: linear-gradient(135deg, #ff4081 0%, #e91e63 100%);
+    background: #3067C5;
+    color: white;
 }
 
 .login-button:hover {
-    background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);
+    background: #2856b3;
 }
 
 /* Header da Página */
@@ -115,8 +119,8 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
-    color: white;
-    font-weight: 300;
+    color: #333;
+    font-weight: 500;
     margin: 0;
 }
 
@@ -129,8 +133,9 @@ body {
     width: 100%;
     margin-bottom: 24px;
     border-radius: 12px;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
+    background: #ffffff;
+    border: 2px solid #f0f0f0;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
 .user-info-card .mdl-card__supporting-text {
@@ -150,24 +155,27 @@ body {
 }
 
 .contagem-card {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
+    background: #ffffff;
+    border: 2px solid #e8e8e8;
     border-radius: 12px;
     overflow: hidden;
     cursor: pointer;
     transition: all 0.3s ease;
     animation: fadeInUp 0.5s ease-out;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
 .contagem-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    border-color: #d0d0d0;
 }
 
 .contagem-card .mdl-card__title {
-    background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+    background: linear-gradient(90deg, #3067C5 0%, #B6C947 100%);
     color: white;
     padding: 20px;
+    border-radius: 0;
 }
 
 .contagem-card .mdl-card__title-text {
@@ -184,7 +192,7 @@ body {
 }
 
 .contagem-info strong {
-    color: #3f51b5;
+    color: #3067C5;
 }
 
 .contagem-date {
@@ -197,8 +205,9 @@ body {
     width: 100%;
     margin-bottom: 24px;
     border-radius: 12px;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
+    background: #ffffff;
+    border: 2px solid #f0f0f0;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
 .contagem-info-card .mdl-card__supporting-text {
@@ -209,11 +218,12 @@ body {
 
 /* Tabela de Itens */
 .table-container {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
+    background: #ffffff;
+    border: 2px solid #f0f0f0;
     border-radius: 12px;
     overflow: hidden;
     margin-top: 20px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
 .itens-table {
@@ -223,7 +233,7 @@ body {
 }
 
 .itens-table thead {
-    background: linear-gradient(135deg, #3f51b5 0%, #5c6bc0 100%);
+    background: linear-gradient(90deg, #3067C5 0%, #B6C947 100%);
 }
 
 .itens-table thead th {
@@ -239,7 +249,7 @@ body {
 }
 
 .itens-table tbody tr:hover {
-    background-color: rgba(63, 81, 181, 0.05);
+    background-color: rgba(48, 103, 197, 0.05);
 }
 
 .itens-table tbody td {
@@ -266,7 +276,7 @@ body {
 }
 
 .localizacao-badge {
-    background: linear-gradient(135deg, #ff9800 0%, #ffc107 100%);
+    background: linear-gradient(90deg, #3067C5 0%, #B6C947 100%);
     color: white;
     padding: 6px 12px;
     border-radius: 20px;
@@ -289,7 +299,7 @@ body {
 
 .quantidade-input:focus {
     outline: none;
-    border-color: #3f51b5;
+    border-color: #3067C5;
 }
 
 /* Loading */
@@ -418,15 +428,87 @@ body {
     background-color: rgba(255, 255, 255, 0.1);
 }
 
+/* Botão de logout específico */
+#logout-btn {
+    background-color: #3067C5;
+    color: white;
+    border-radius: 4px;
+}
+
+#logout-btn:hover {
+    background-color: #2856b3;
+}
+
+/* Botão de voltar */
+#back-btn {
+    background-color: #3067C5;
+    color: white;
+    border-radius: 4px;
+}
+
+#back-btn:hover {
+    background-color: #2856b3;
+}
+
+/* Todos os botões raised do MDL */
+.mdl-button--raised {
+    background-color: #3067C5 !important;
+    color: white !important;
+}
+
+.mdl-button--raised:hover {
+    background-color: #2856b3 !important;
+}
+
+/* Botões colored do MDL */
+.mdl-button--colored {
+    background-color: #3067C5 !important;
+    color: white !important;
+}
+
+.mdl-button--colored:hover {
+    background-color: #2856b3 !important;
+}
+
 /* Melhorias visuais */
 .mdl-card {
     border-radius: 12px;
 }
 
 .mdl-shadow--2dp {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
 .mdl-shadow--6dp {
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilo moderno para inputs */
+.mdl-textfield__input {
+    border-bottom: 2px solid #e0e0e0;
+    transition: border-color 0.3s ease;
+}
+
+.mdl-textfield.is-focused .mdl-textfield__input {
+    border-bottom-color: #3067C5;
+}
+
+.mdl-textfield__label {
+    color: #666;
+}
+
+.mdl-textfield.is-focused .mdl-textfield__label {
+    color: #3067C5;
+}
+
+/* Botões modernos */
+.login-button {
+    background: #3067C5;
+    box-shadow: 0 4px 12px rgba(48, 103, 197, 0.3);
+    color: white;
+}
+
+.login-button:hover {
+    background: #2856b3;
+    box-shadow: 0 6px 16px rgba(48, 103, 197, 0.4);
 }
