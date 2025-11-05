@@ -182,18 +182,21 @@ async function loadContagens() {
 
 // Função para renderizar contagens
 function renderContagens(contagens) {
-    if (contagens.length === 0) {
+    // Filtrar apenas contagens liberadas
+    const contagensLiberadas = contagens.filter(contagem => contagem.liberado_contagem === true);
+    
+    if (contagensLiberadas.length === 0) {
         contagensGrid.innerHTML = `
-            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: white;">
-                <i class="material-icons" style="font-size: 48px; margin-bottom: 16px;">inbox</i>
-                <h4>Nenhuma contagem encontrada</h4>
-                <p>Não há contagens disponíveis no momento.</p>
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #666;">
+                <i class="material-icons" style="font-size: 48px; margin-bottom: 16px; color: #bbb;">inbox</i>
+                <h4 style="color: #333; margin-bottom: 8px;">Nenhuma contagem liberada encontrada</h4>
+                <p style="color: #666;">Não há contagens liberadas para você no momento.</p>
             </div>
         `;
         return;
     }
 
-    contagens.forEach((contagem, index) => {
+    contagensLiberadas.forEach((contagem, index) => {
         const dataFormatada = new Date(contagem.created_at).toLocaleDateString('pt-BR', {
             day: '2-digit',
             month: '2-digit',
