@@ -328,7 +328,7 @@ function renderItens(itens) {
     if (!itens || itens.length === 0) {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td colspan="3" style="text-align: center; padding: 40px; color: #666;">
+            <td colspan="4" style="text-align: center; padding: 40px; color: #666;">
                 <i class="material-icons" style="font-size: 32px; margin-bottom: 8px;">inventory_2</i><br>
                 Nenhum item encontrado nesta contagem
             </td>
@@ -343,7 +343,7 @@ function renderItens(itens) {
     if (itensParaConferir.length === 0) {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td colspan="3" style="text-align: center; padding: 40px; color: #666;">
+            <td colspan="4" style="text-align: center; padding: 40px; color: #666;">
                 <i class="material-icons" style="font-size: 32px; margin-bottom: 8px; color: #4caf50;">check_circle</i><br>
                 <h4 style="color: #4caf50; margin: 8px 0;">Todos os itens conferidos!</h4>
                 <p>Não há divergências nesta contagem.</p>
@@ -363,6 +363,9 @@ function renderItens(itens) {
                 <div class="produto-info">
                     <div class="produto-nome">${item.desc_produto}</div>
                 </div>
+            </td>
+            <td class="mdl-data-table__cell--numeric">
+                ${item.cod_produto}
             </td>
             <td class="mdl-data-table__cell--non-numeric">
                 <span class="localizacao-badge">${item.localizacao}</span>
