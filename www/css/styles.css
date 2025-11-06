@@ -302,6 +302,22 @@ body {
     border-color: #3067C5;
 }
 
+/* Estados de conferência */
+.quantidade-input.conferencia-ok {
+    border-color: #4caf50;
+    background-color: #e8f5e8;
+}
+
+.quantidade-input.conferencia-divergente {
+    border-color: #ff9800;
+    background-color: #fff3e0;
+}
+
+.quantidade-input.conferencia-erro {
+    border-color: #f44336;
+    background-color: #ffebee;
+}
+
 /* Loading */
 .loading-center {
     display: flex;
@@ -468,6 +484,20 @@ body {
 
 .mdl-button--colored:hover {
     background-color: #2856b3 !important;
+}
+
+/* Botão de salvar */
+#salvar-btn {
+    padding: 12px 32px;
+    font-size: 16px;
+    font-weight: 500;
+    min-width: 200px;
+}
+
+#salvar-btn:disabled {
+    background-color: #ccc !important;
+    color: #666 !important;
+    cursor: not-allowed;
 }
 
 /* Melhorias visuais */

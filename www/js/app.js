@@ -4,6 +4,7 @@ const API_BASE_URL = 'https://intranetbackend.acacessorios.local';
 // Estado da aplicação
 let currentUser = null;
 let currentContagem = null;
+let temDivergencias = false;
 
 // Elementos DOM
 const loginScreen = document.getElementById('login-screen');
@@ -19,6 +20,8 @@ const itensTbody = document.getElementById('itens-tbody');
 const contagemDetails = document.getElementById('contagem-details');
 const backBtn = document.getElementById('back-btn');
 const logoutBtn = document.getElementById('logout-btn');
+const salvarBtn = document.getElementById('salvar-btn');
+const salvarBtnAlt = document.getElementById('salvar-btn-alt');
 const toast = document.getElementById('toast');
 
 // Inicialização
@@ -34,14 +37,57 @@ document.addEventListener('DOMContentLoaded', function() {
     loginForm.addEventListener('submit', handleLogin);
     backBtn.addEventListener('click', () => showContagensScreen());
     logoutBtn.addEventListener('click', handleLogout);
+    
+    // Debug: verificar se o botão salvar existe
+    if (salvarBtn) {
+        console.log('✅ Botão salvar encontrado, adicionando event listener');
+        console.log('📍 Botão info:', {
+            id: salvarBtn.id,
+            display: salvarBtn.style.display,
+            disabled: salvarBtn.disabled,
+            innerHTML: salvarBtn.innerHTML
+        });
+        
+        // Remover qualquer listener anterior
+        salvarBtn.removeEventListener('click', handleSalvarContagem);
+        
+        // Usar onclick diretamente 
+        salvarBtn.onclick = function(event) {
+            console.log('🖱️ BOTÃO SALVAR CLICADO!!! Event:', event);
+            console.log('📍 Estado do botão no click:', {
+                display: salvarBtn.style.display,
+                disabled: salvarBtn.disabled,
+                innerHTML: salvarBtn.innerHTML
+            });
+            
+            event.preventDefault();
+            event.stopPropagation();
+            
+            handleSalvarContagem();
+            return false;
+        };
+        
+        // Adicionar também via addEventListener como backup
+        salvarBtn.addEventListener('click', (event) => {
+            console.log('🖱️ BACKUP EVENT LISTENER ATIVADO!');
+        }, true); // useCapture = true
+        
+        // Adicionar também um listener de mousedown para debug
+        salvarBtn.addEventListener('mousedown', () => {
+            console.log('🖱️ MOUSEDOWN no botão salvar');
+        });
+        
+    } else {
+        console.log('❌ Botão salvar NÃO encontrado!');
+    }
 });
 
 // Função para mostrar toast
-function showToast(message, actionText = '') {
+function showToast(message, actionText = '', timeout = 3000) {
     const snackbar = toast.MaterialSnackbar;
     const data = {
         message: message,
-        timeout: 3000
+        timeout: timeout
     };
     if (actionText) {
         data.actionText = actionText;
@@ -215,7 +261,7 @@ function renderContagens(contagens) {
             </div>
             <div class="mdl-card__supporting-text">
                 <div class="contagem-info">
-                    <strong>ID:</strong> ${contagem.id}
+                    <strong>ID:</strong> ${contagem.contagem_cuid}
                 </div>
                 <div class="contagem-info">
                     <strong>Responsável:</strong> ${contagem.usuario?.nome || 'N/A'}
@@ -245,8 +291,17 @@ async function showItensScreen() {
 
     showScreen('itens-screen');
     
+    // Resetar estados
+    temDivergencias = false;
+    salvarBtn.style.display = 'none';
+    salvarBtn.disabled = false;
+    salvarBtn.innerHTML = '<i class="material-icons" style="margin-right: 8px;">save</i>Finalizar Contagem';
+    
     // Mostrar informações da contagem
-    contagemDetails.textContent = `Contagem #${currentContagem.contagem} - ${currentContagem.usuario?.nome || 'N/A'}`;
+    const itensParaConferir = currentContagem.itens ? currentContagem.itens.filter(item => item.conferir === true) : [];
+    const totalItens = currentContagem.itens ? currentContagem.itens.length : 0;
+    
+    contagemDetails.textContent = `Contagem #${currentContagem.contagem} - ${currentContagem.usuario?.nome || 'N/A'} | ${itensParaConferir.length} de ${totalItens} itens para conferir`;
 
     // Carregar itens
     await loadItens();
@@ -282,7 +337,23 @@ function renderItens(itens) {
         return;
     }
 
-    itens.forEach((item, index) => {
+    // Filtrar apenas itens com conferir = true
+    const itensParaConferir = itens.filter(item => item.conferir === true);
+    
+    if (itensParaConferir.length === 0) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td colspan="3" style="text-align: center; padding: 40px; color: #666;">
+                <i class="material-icons" style="font-size: 32px; margin-bottom: 8px; color: #4caf50;">check_circle</i><br>
+                <h4 style="color: #4caf50; margin: 8px 0;">Todos os itens conferidos!</h4>
+                <p>Não há divergências nesta contagem.</p>
+            </td>
+        `;
+        itensTbody.appendChild(row);
+        return;
+    }
+
+    itensParaConferir.forEach((item, index) => {
         const row = document.createElement('tr');
         row.style.animationDelay = `${index * 0.05}s`;
         row.style.animation = 'fadeInUp 0.3s ease-out forwards';
@@ -304,7 +375,8 @@ function renderItens(itens) {
                     min="0"
                     step="1"
                     data-item-id="${item.id}"
-                    onchange="handleQuantidadeChange(this, '${item.id}')"
+                    data-cod-produto="${item.cod_produto}"
+                    onblur="handleQuantidadeChange(this, '${item.id}', '${item.cod_produto}')"
                 >
             </td>
         `;
@@ -317,7 +389,7 @@ function renderItens(itens) {
 }
 
 // Função para lidar com mudança de quantidade
-function handleQuantidadeChange(input, itemId) {
+async function handleQuantidadeChange(input, itemId, codProduto) {
     const quantidade = parseInt(input.value);
     
     if (isNaN(quantidade) || quantidade < 0) {
@@ -328,16 +400,245 @@ function handleQuantidadeChange(input, itemId) {
 
     console.log(`Item ${itemId}: Quantidade alterada para ${quantidade}`);
     
-    // Aqui você pode adicionar lógica para salvar a quantidade
-    // Por exemplo, fazer uma requisição para API para salvar
-    
-    // Feedback visual
-    input.style.borderColor = '#4caf50';
-    setTimeout(() => {
-        input.style.borderColor = '#e0e0e0';
-    }, 1000);
+    try {
+        // Conferir o estoque no sistema
+        await conferirEstoque(itemId, codProduto, quantidade, input);
+        
+        // Focar no próximo input
+        focusNextInput(input);
+        
+    } catch (error) {
+        console.error('Erro ao conferir estoque:', error);
+        showToast('❌ Erro ao conferir estoque');
+        input.classList.remove('conferencia-ok', 'conferencia-divergente');
+        input.classList.add('conferencia-erro');
+        setTimeout(() => {
+            input.classList.remove('conferencia-erro');
+        }, 3000);
+    }
+}
 
-    showToast(`Quantidade ${quantidade} registrada`);
+// Função para conferir estoque
+async function conferirEstoque(itemId, codProduto, quantidadeDigitada, input) {
+    try {
+        // Fazer GET para conferir estoque
+        const response = await makeRequest(`${API_BASE_URL}/estoque/contagem/conferir/${codProduto}?empresa=3`);
+        
+        const estoqueReal = response.ESTOQUE;
+        const conferir = quantidadeDigitada !== estoqueReal;
+        
+        // Fazer PUT para atualizar o item
+        await makeRequest(`${API_BASE_URL}/estoque/contagem/item/${itemId}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                conferir: conferir
+            })
+        });
+        
+        // Limpar classes anteriores
+        input.classList.remove('conferencia-ok', 'conferencia-divergente', 'conferencia-erro');
+        
+        // Feedback visual baseado na conferência
+        if (conferir) {
+            // Quantidade diferente - precisa conferir
+            input.classList.add('conferencia-divergente');
+            input.dataset.temDivergencia = 'true';
+            showToast(`⚠️ Divergência! Estoque: ${estoqueReal}, Digitado: ${quantidadeDigitada}`);
+        } else {
+            // Quantidade igual - não precisa conferir
+            input.classList.add('conferencia-ok');
+            input.dataset.temDivergencia = 'false';
+            showToast(`✓ Conferido: ${quantidadeDigitada}`);
+        }
+        
+        // Verificar se há divergências e mostrar botão de salvar
+        verificarDivergenciasEMostrarBotao();
+        
+        // Resetar classe após alguns segundos
+        setTimeout(() => {
+            input.classList.remove('conferencia-ok', 'conferencia-divergente');
+        }, 3000);
+        
+    } catch (error) {
+        throw error;
+    }
+}
+
+// Função para focar no próximo input
+function focusNextInput(currentInput) {
+    const allInputs = document.querySelectorAll('.quantidade-input');
+    const currentIndex = Array.from(allInputs).indexOf(currentInput);
+    
+    if (currentIndex >= 0 && currentIndex < allInputs.length - 1) {
+        const nextInput = allInputs[currentIndex + 1];
+        nextInput.focus();
+        nextInput.select();
+    }
+}
+
+// Função para verificar divergências e mostrar botão de salvar
+function verificarDivergenciasEMostrarBotao() {
+    console.log('🔍 verificarDivergenciasEMostrarBotao chamada');
+    
+    const totalInputs = document.querySelectorAll('.quantidade-input');
+    console.log('📊 Total inputs encontrados:', totalInputs.length);
+    
+    // Se não há inputs (todos os itens já foram conferidos), não mostrar botão
+    if (totalInputs.length === 0) {
+        console.log('❌ Nenhum input encontrado, escondendo botão');
+        salvarBtn.style.display = 'none';
+        temDivergencias = false;
+        return;
+    }
+    
+    // Verificar se todos os inputs foram preenchidos
+    const todosPreenchidos = Array.from(totalInputs).every(input => 
+        input.value && input.value.trim() !== '' && input.dataset.temDivergencia !== undefined
+    );
+    
+    console.log('✅ Todos inputs preenchidos:', todosPreenchidos);
+    
+    if (todosPreenchidos) {
+        // Verificar se há pelo menos uma divergência real
+        const inputsComDivergencia = document.querySelectorAll('.quantidade-input[data-tem-divergencia="true"]');
+        
+        console.log('⚠️ Inputs com divergência encontrados:', inputsComDivergencia.length);
+        
+        if (inputsComDivergencia.length > 0) {
+            temDivergencias = true;
+            salvarBtn.style.display = 'inline-block';
+            // salvarBtnAlt sempre visível - não controlar aqui
+            console.log(`✅ ${inputsComDivergencia.length} divergências encontradas, MOSTRANDO botão de salvar`);
+            
+            // Debug adicional do botão
+            setTimeout(() => {
+                console.log('🔍 Verificação do botão após mostrar:', {
+                    elemento: salvarBtn,
+                    display: salvarBtn.style.display,
+                    visible: salvarBtn.offsetWidth > 0 && salvarBtn.offsetHeight > 0,
+                    disabled: salvarBtn.disabled,
+                    innerHTML: salvarBtn.innerHTML,
+                    rect: salvarBtn.getBoundingClientRect()
+                });
+            }, 100);
+        } else {
+            temDivergencias = false;
+            salvarBtn.style.display = 'none';
+            // salvarBtnAlt sempre visível - não esconder
+            console.log('❌ Nenhuma divergência encontrada, ESCONDENDO botão de salvar');
+        }
+    } else {
+        salvarBtn.style.display = 'none';
+        // salvarBtnAlt sempre visível - não esconder
+        temDivergencias = false;
+        console.log('❌ Nem todos os inputs foram preenchidos, escondendo botão');
+    }
+    
+    console.log('🎯 Estado final: temDivergencias =', temDivergencias, ', botão display =', salvarBtn.style.display);
+    
+    // Função de teste - você pode chamar no console: testarBotaoSalvar()
+    window.testarBotaoSalvar = function() {
+        console.log('🧪 Testando click programático do botão salvar...');
+        if (salvarBtn) {
+            salvarBtn.click();
+        } else {
+            console.log('❌ Botão não encontrado para teste');
+        }
+    };
+    
+    // Função para forçar execução direta
+    window.forceSalvar = function() {
+        console.log('💪 FORÇANDO EXECUÇÃO DIRETA DA FUNÇÃO SALVAR');
+        handleSalvarContagem();
+    };
+    
+    // Teste automático removido conforme solicitado
+}
+
+// Função para salvar contagem (enviar para liberação)
+window.handleSalvarContagem = async function handleSalvarContagem() {
+    console.log('🔄 handleSalvarContagem iniciada');
+    
+    if (!currentContagem) {
+        console.log('❌ currentContagem não encontrada');
+        showToast('Erro: contagem não encontrada');
+        return;
+    }
+    
+    console.log('✅ currentContagem encontrada:', currentContagem);
+
+    // Verificar se algum input teve divergência
+    const inputsComDivergencia = document.querySelectorAll('.quantidade-input[data-tem-divergencia="true"]');
+    const todosInputs = document.querySelectorAll('.quantidade-input');
+    
+    console.log('📊 Total de inputs:', todosInputs.length);
+    console.log('⚠️ Inputs com divergência:', inputsComDivergencia.length);
+    
+    // Debug: listar todos os inputs e seus valores
+    todosInputs.forEach((input, index) => {
+        console.log(`Input ${index}:`, {
+            value: input.value,
+            temDivergencia: input.dataset.temDivergencia,
+            itemId: input.dataset.itemId,
+            codProduto: input.dataset.codProduto
+        });
+    });
+    
+    if (inputsComDivergencia.length === 0) {
+        console.log('❌ Nenhuma divergência encontrada, saindo da função');
+        showToast('Nenhuma divergência encontrada para salvar');
+        return;
+    }
+    
+    console.log('✅ Divergências encontradas, continuando...');
+
+    // Desabilitar botão durante o envio
+    salvarBtn.disabled = true;
+    salvarBtn.innerHTML = '<i class="material-icons">hourglass_empty</i> Salvando...';
+
+    try {
+        // Preparar o body que será enviado
+        const bodyData = {
+            contagem_cuid: currentContagem.contagem_cuid,
+            contagem: currentContagem.contagem
+        };
+        
+        const bodyJson = JSON.stringify(bodyData);
+        
+        // Log no console
+        console.log('Enviando PUT para liberar contagem:', bodyData);
+        console.log('Body JSON:', bodyJson);
+        
+        // Mostrar na tela para o usuário
+        showToast(`📤 Enviando: contagem_cuid: ${bodyData.contagem_cuid}, contagem: ${bodyData.contagem}`, '', 5000);
+        
+        // Alert detalhado (opcional - pode comentar se não quiser)
+        alert(`🔄 ENVIANDO PUT:\n\nURL: ${API_BASE_URL}/estoque/contagem/liberar\n\nBody:\n${bodyJson}`);
+
+        const response = await makeRequest(`${API_BASE_URL}/estoque/contagem/liberar`, {
+            method: 'PUT',
+            body: bodyJson
+        });
+
+        console.log('Resposta do servidor:', response);
+
+        if (response) {
+            showToast('✅ Contagem finalizada com sucesso!');
+            setTimeout(() => {
+                showContagensScreen();
+            }, 1500);
+        } else {
+            throw new Error('Resposta inválida do servidor');
+        }
+
+    } catch (error) {
+        console.error('Erro ao salvar contagem:', error);
+        showToast('❌ Erro ao finalizar contagem');
+        
+        // Restaurar botão
+        salvarBtn.disabled = false;
+        salvarBtn.innerHTML = '<i class="material-icons" style="margin-right: 8px;">save</i>Finalizar Contagem';
+    }
 }
 
 // Função para salvar todas as quantidades (exemplo)

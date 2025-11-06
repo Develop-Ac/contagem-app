@@ -101,8 +101,8 @@
                             <i class="material-icons">arrow_back</i>
                         </button>
                         <h3 class="page-title">
-                            <i class="material-icons">inventory</i>
-                            Itens da Contagem
+                            <i class="material-icons">assignment_late</i>
+                            Itens para Conferência
                         </h3>
                     </div>
                     
@@ -128,6 +128,19 @@
                             <tbody id="itens-tbody">
                             </tbody>
                         </table>
+                    </div>
+                    
+                    <!-- Botão Salvar -->
+                    <div style="margin-top: 24px; text-align: center;">
+                        <button id="salvar-btn" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" style="display: none;" onclick="console.log('🖱️ ONCLICK HTML ATIVADO!'); handleSalvarContagem();">
+                            Finalizar Contagem
+                        </button>
+                        
+                        <!-- Botão alternativo para teste -->
+                        <button id="salvar-btn-alt" style="margin-left: 10px; padding: 12px 24px; background: #3067C5; color: white; border: none; border-radius: 4px; cursor: pointer;" onclick="console.log('🖱️ BOTÃO ALTERNATIVO CLICADO!'); window.handleSalvarContagem();">
+                            🔄 SALVAR
+                        </button>
+                        
                     </div>
                 </div>
             </div>
