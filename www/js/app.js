@@ -370,6 +370,9 @@ function renderItens(itens) {
             <td class="mdl-data-table__cell--non-numeric">
                 <span class="localizacao-badge">${item.localizacao}</span>
             </td>
+               <td class="mdl-data-table__cell--non-numeric">
+                   <span class="aplicacoes-badge">${item.aplicacoes ? item.aplicacoes : ''}</span>
+               </td>
             <td class="mdl-data-table__cell--numeric">
                 <input 
                     type="number" 
