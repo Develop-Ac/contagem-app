@@ -1,10 +1,9 @@
-// Configuração da API
+﻿// ConfiguraÃ§Ã£o da API
 const API_BASE_URL = 'https://intranetbackend.acacessorios.local';
 
-// Estado da aplicação
+// Estado da aplicaÃ§Ã£o
 let currentUser = null;
 let currentContagem = null;
-let temDivergencias = false;
 
 // Elementos DOM
 const loginScreen = document.getElementById('login-screen');
@@ -16,17 +15,19 @@ const userNameSpan = document.getElementById('user-name');
 const contagensGrid = document.getElementById('contagens-grid');
 const contagensLoading = document.getElementById('contagens-loading');
 const itensLoading = document.getElementById('itens-loading');
-const itensTbody = document.getElementById('itens-tbody');
-const contagemDetails = document.getElementById('contagem-details');
+const itensList = document.getElementById('itens-list');
+const contagemHeading = document.getElementById('contagem-heading');
 const backBtn = document.getElementById('back-btn');
 const logoutBtn = document.getElementById('logout-btn');
 const salvarBtn = document.getElementById('salvar-btn');
-const salvarBtnAlt = document.getElementById('salvar-btn-alt');
 const toast = document.getElementById('toast');
 
-// Inicialização
+// InicializaÃ§Ã£o
 document.addEventListener('DOMContentLoaded', function() {
-    // Verificar se já está logado
+    // Ajusta estado inicial da classe do body baseada na tela ativa
+    document.body.classList.toggle('login-screen-active', loginScreen.classList.contains('active'));
+
+    // Verificar se jÃ¡ estÃ¡ logado
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
         currentUser = JSON.parse(savedUser);
@@ -38,10 +39,10 @@ document.addEventListener('DOMContentLoaded', function() {
     backBtn.addEventListener('click', () => showContagensScreen());
     logoutBtn.addEventListener('click', handleLogout);
     
-    // Debug: verificar se o botão salvar existe
+    // Debug: verificar se o botÃ£o salvar existe
     if (salvarBtn) {
-        console.log('✅ Botão salvar encontrado, adicionando event listener');
-        console.log('📍 Botão info:', {
+        console.log('âœ… BotÃ£o salvar encontrado, adicionando event listener');
+        console.log('ðŸ“ BotÃ£o info:', {
             id: salvarBtn.id,
             display: salvarBtn.style.display,
             disabled: salvarBtn.disabled,
@@ -53,8 +54,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Usar onclick diretamente 
         salvarBtn.onclick = function(event) {
-            console.log('🖱️ BOTÃO SALVAR CLICADO!!! Event:', event);
-            console.log('📍 Estado do botão no click:', {
+            console.log('ðŸ–±ï¸ BOTÃƒO SALVAR CLICADO!!! Event:', event);
+            console.log('ðŸ“ Estado do botÃ£o no click:', {
                 display: salvarBtn.style.display,
                 disabled: salvarBtn.disabled,
                 innerHTML: salvarBtn.innerHTML
@@ -67,22 +68,22 @@ document.addEventListener('DOMContentLoaded', function() {
             return false;
         };
         
-        // Adicionar também via addEventListener como backup
+        // Adicionar tambÃ©m via addEventListener como backup
         salvarBtn.addEventListener('click', (event) => {
-            console.log('🖱️ BACKUP EVENT LISTENER ATIVADO!');
+            console.log('ðŸ–±ï¸ BACKUP EVENT LISTENER ATIVADO!');
         }, true); // useCapture = true
         
-        // Adicionar também um listener de mousedown para debug
+        // Adicionar tambÃ©m um listener de mousedown para debug
         salvarBtn.addEventListener('mousedown', () => {
-            console.log('🖱️ MOUSEDOWN no botão salvar');
+            console.log('ðŸ–±ï¸ MOUSEDOWN no botÃ£o salvar');
         });
         
     } else {
-        console.log('❌ Botão salvar NÃO encontrado!');
+        console.log('âŒ BotÃ£o salvar NÃƒO encontrado!');
     }
 });
 
-// Função para mostrar toast
+// FunÃ§Ã£o para mostrar toast
 function showToast(message, actionText = '', timeout = 3000) {
     const snackbar = toast.MaterialSnackbar;
     const data = {
@@ -95,7 +96,7 @@ function showToast(message, actionText = '', timeout = 3000) {
     snackbar.showSnackbar(data);
 }
 
-// Função para fazer requisições HTTP
+// FunÃ§Ã£o para fazer requisiÃ§Ãµes HTTP
 async function makeRequest(url, options = {}) {
     try {
         const response = await fetch(url, {
@@ -117,7 +118,7 @@ async function makeRequest(url, options = {}) {
     }
 }
 
-// Função de login
+// FunÃ§Ã£o de login
 async function handleLogin(event) {
     event.preventDefault();
 
@@ -160,20 +161,20 @@ async function handleLogin(event) {
         }
     } catch (error) {
         console.error('Erro no login:', error);
-        showToast('Erro de conexão. Tente novamente.');
+        showToast('Erro de conexÃ£o. Tente novamente.');
     } finally {
         loginLoading.style.display = 'none';
         submitButton.disabled = false;
     }
 }
 
-// Função para logout
+// FunÃ§Ã£o para logout
 function handleLogout() {
     localStorage.removeItem('currentUser');
     currentUser = null;
     currentContagem = null;
     
-    // Limpar formulário
+    // Limpar formulÃ¡rio
     loginForm.reset();
     
     // Mostrar tela de login
@@ -182,19 +183,20 @@ function handleLogout() {
     showToast('Logout realizado com sucesso');
 }
 
-// Função para mostrar tela específica
+// FunÃ§Ã£o para mostrar tela especÃ­fica
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(screen => {
         screen.classList.remove('active');
     });
     document.getElementById(screenId).classList.add('active');
+    document.body.classList.toggle('login-screen-active', screenId === 'login-screen');
 }
 
-// Função para mostrar tela de contagens
+// FunÃ§Ã£o para mostrar tela de contagens
 async function showContagensScreen() {
     showScreen('contagens-screen');
     
-    // Mostrar nome do usuário
+    // Mostrar nome do usuÃ¡rio
     if (currentUser) {
         userNameSpan.textContent = `Olá, ${currentUser.nome}`;
     }
@@ -203,7 +205,7 @@ async function showContagensScreen() {
     await loadContagens();
 }
 
-// Função para carregar contagens
+// FunÃ§Ã£o para carregar contagens
 async function loadContagens() {
     if (!currentUser) return;
 
@@ -220,13 +222,13 @@ async function loadContagens() {
         }
     } catch (error) {
         console.error('Erro ao carregar contagens:', error);
-        showToast('Erro de conexão ao carregar contagens');
+        showToast('Erro de conexÃ£o ao carregar contagens');
     } finally {
         contagensLoading.style.display = 'none';
     }
 }
 
-// Função para renderizar contagens
+// FunÃ§Ã£o para renderizar contagens
 function renderContagens(contagens) {
     // Filtrar apenas contagens liberadas
     const contagensLiberadas = contagens.filter(contagem => contagem.liberado_contagem === true);
@@ -236,7 +238,7 @@ function renderContagens(contagens) {
             <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #666;">
                 <i class="material-icons" style="font-size: 48px; margin-bottom: 16px; color: #bbb;">inbox</i>
                 <h4 style="color: #333; margin-bottom: 8px;">Nenhuma contagem liberada encontrada</h4>
-                <p style="color: #666;">Não há contagens liberadas para você no momento.</p>
+                <p style="color: #666;">NÃ£o hÃ¡ contagens liberadas para vocÃª no momento.</p>
             </div>
         `;
         return;
@@ -285,34 +287,33 @@ function renderContagens(contagens) {
     });
 }
 
-// Função para mostrar tela de itens
+// FunÃ§Ã£o para mostrar tela de itens
 async function showItensScreen() {
     if (!currentContagem) return;
 
     showScreen('itens-screen');
     
     // Resetar estados
-    temDivergencias = false;
-    salvarBtn.style.display = 'none';
-    salvarBtn.disabled = false;
-    salvarBtn.innerHTML = '<i class="material-icons" style="margin-right: 8px;">save</i>Finalizar Contagem';
+    salvarBtn.style.display = 'inline-flex';
+    salvarBtn.disabled = true;
+    salvarBtn.innerHTML = '<i class="material-icons" style="margin-right: 8px;">save</i>Concluir Contagem';
     
-    // Mostrar informações da contagem
+    // Mostrar informaÃ§Ãµes da contagem
     const itensParaConferir = currentContagem.itens ? currentContagem.itens.filter(item => item.conferir === true) : [];
     const totalItens = currentContagem.itens ? currentContagem.itens.length : 0;
     
-    contagemDetails.textContent = `Contagem #${currentContagem.contagem} - ${currentContagem.usuario?.nome || 'N/A'} | ${itensParaConferir.length} de ${totalItens} itens para conferir`;
+    contagemHeading.textContent = `Contagem #${currentContagem.contagem} | ${itensParaConferir.length} de ${totalItens} itens para conferir`;
 
     // Carregar itens
     await loadItens();
 }
 
-// Função para carregar itens (simulação, já que os itens vêm na contagem)
+// FunÃ§Ã£o para carregar itens (simulaÃ§Ã£o, jÃ¡ que os itens vÃªm na contagem)
 async function loadItens() {
     if (!currentContagem || !currentContagem.itens) return;
 
     itensLoading.style.display = 'flex';
-    itensTbody.innerHTML = '';
+    itensList.innerHTML = '';
 
     // Simular delay para loading
     setTimeout(() => {
@@ -321,86 +322,148 @@ async function loadItens() {
     }, 500);
 }
 
-// Função para renderizar itens na tabela
+// FunÃ§Ã£o para renderizar itens na tabela
 function renderItens(itens) {
-    itensTbody.innerHTML = '';
+    itensList.innerHTML = '';
 
     if (!itens || itens.length === 0) {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td colspan="4" style="text-align: center; padding: 40px; color: #666;">
-                <i class="material-icons" style="font-size: 32px; margin-bottom: 8px;">inventory_2</i><br>
-                Nenhum item encontrado nesta contagem
-            </td>
+        const emptyState = document.createElement('div');
+        emptyState.className = 'itens-empty';
+        emptyState.innerHTML = `
+            <i class="material-icons">inventory_2</i>
+            <p>Nenhum item encontrado nesta contagem</p>
         `;
-        itensTbody.appendChild(row);
+        itensList.appendChild(emptyState);
         return;
     }
 
-    // Filtrar apenas itens com conferir = true
     const itensParaConferir = itens.filter(item => item.conferir === true);
     
     if (itensParaConferir.length === 0) {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td colspan="4" style="text-align: center; padding: 40px; color: #666;">
-                <i class="material-icons" style="font-size: 32px; margin-bottom: 8px; color: #4caf50;">check_circle</i><br>
-                <h4 style="color: #4caf50; margin: 8px 0;">Todos os itens conferidos!</h4>
-                <p>Não há divergências nesta contagem.</p>
-            </td>
+        const doneState = document.createElement('div');
+        doneState.className = 'itens-empty sucesso';
+        doneState.innerHTML = `
+            <i class="material-icons">check_circle</i>
+            <h4>Todos os itens conferidos!</h4>
+            <p>NÃ£o hÃ¡ divergÃªncias nesta contagem.</p>
         `;
-        itensTbody.appendChild(row);
+        itensList.appendChild(doneState);
         return;
     }
 
     itensParaConferir.forEach((item, index) => {
-        const row = document.createElement('tr');
-        row.style.animationDelay = `${index * 0.05}s`;
-        row.style.animation = 'fadeInUp 0.3s ease-out forwards';
-        
-        row.innerHTML = `
-            <td class="mdl-data-table__cell--non-numeric">
-                <div class="produto-info">
-                    <div class="produto-nome">${item.desc_produto}</div>
+        const card = document.createElement('div');
+        card.className = 'item-card';
+        card.dataset.itemId = item.id;
+        card.style.animationDelay = `${index * 0.05}s`;
+
+        const subLocal = item.sub_localizacao || item.aplicacoes || '-';
+        const localizacao = item.localizacao || '-';
+
+        card.innerHTML = `
+            <div class="item-card__info">
+                <div class="item-card__title">
+                    <span class="item-code">#${item.cod_produto}</span>
+                    <span class="item-desc">${item.desc_produto || '-'}</span>
                 </div>
-            </td>
-            <td class="mdl-data-table__cell--numeric">
-                ${item.cod_produto}
-            </td>
-            <td class="mdl-data-table__cell--non-numeric">
-                <span class="localizacao-badge">${item.localizacao}</span>
-            </td>
-               <td class="mdl-data-table__cell--non-numeric">
-                   <span class="aplicacoes-badge">${item.aplicacoes ? item.aplicacoes : ''}</span>
-               </td>
-            <td class="mdl-data-table__cell--numeric">
-                <input 
-                    type="number" 
-                    class="quantidade-input" 
-                    placeholder="Qtd"
-                    min="0"
-                    step="1"
-                    data-item-id="${item.id}"
-                    data-cod-produto="${item.cod_produto}"
-                    onblur="handleQuantidadeChange(this, '${item.id}', '${item.cod_produto}')"
-                >
-            </td>
+                <div class="item-card__meta">
+                    <span>Localização: <strong>${localizacao}</strong></span>
+                    <span>Sub: <strong>${subLocal}</strong></span>
+                </div>
+            </div>
+            <div class="item-card__actions">
+                <div class="quantity-wrapper">
+                    <label>Qtd</label>
+                    <input 
+                        type="number" 
+                        class="quantidade-input" 
+                        placeholder="0"
+                        min="0"
+                        step="1"
+                        data-item-id="${item.id}"
+                        data-cod-produto="${item.cod_produto}"
+                        onblur="handleQuantidadeChange(this, '${item.id}', '${item.cod_produto}')"
+                    >
+                </div>
+                <button type="button" class="item-save-btn" data-mode="save" onclick="toggleItemSave(this)">
+                    <i class="material-icons">check</i>
+                    Salvar
+                </button>
+            </div>
         `;
 
-        itensTbody.appendChild(row);
+        itensList.appendChild(card);
     });
 
-    // Upgrade MDL components
     componentHandler.upgradeDom();
+    updateConcluirButtonState();
 }
 
-// Função para lidar com mudança de quantidade
+function toggleItemSave(button) {
+    const card = button.closest('.item-card');
+    if (!card) return;
+    if (!itensList) return;
+
+    const input = card.querySelector('.quantidade-input');
+    if (!input) return;
+
+    if (button.dataset.mode === 'save') {
+        if (!input.value || input.value.trim() === '') {
+            showToast('Informe a quantidade antes de salvar');
+            input.focus();
+            return;
+        }
+
+        input.disabled = true;
+        card.classList.add('item-card--saved');
+        button.dataset.mode = 'edit';
+        button.classList.add('item-edit-btn');
+        button.innerHTML = '<i class="material-icons">edit</i> Alterar';
+        itensList.appendChild(card);
+    } else {
+        input.disabled = false;
+        card.classList.remove('item-card--saved');
+        button.dataset.mode = 'save';
+        button.classList.remove('item-edit-btn');
+        button.innerHTML = '<i class="material-icons">check</i> Salvar';
+        input.focus();
+        input.select();
+    }
+
+    updateConcluirButtonState();
+}
+
+window.toggleItemSave = toggleItemSave;
+
+function updateConcluirButtonState() {
+    if (!salvarBtn) return;
+
+    salvarBtn.style.display = 'inline-flex';
+
+    const cards = document.querySelectorAll('.item-card');
+
+    if (!cards.length) {
+        salvarBtn.disabled = true;
+        return;
+    }
+
+    const allInputsValid = Array.from(cards).every(card => {
+        const input = card.querySelector('.quantidade-input');
+        return input && input.value && input.value.trim() !== '' && input.dataset.temDivergencia !== undefined;
+    });
+
+    const allSaved = allInputsValid && Array.from(cards).every(card => card.classList.contains('item-card--saved'));
+
+    salvarBtn.disabled = !allSaved;
+}
+
+// FunÃ§Ã£o para lidar com mudanÃ§a de quantidade
 async function handleQuantidadeChange(input, itemId, codProduto) {
     const quantidade = parseInt(input.value);
     
     if (isNaN(quantidade) || quantidade < 0) {
         input.value = '';
-        showToast('Quantidade inválida');
+        showToast('Quantidade invÃ¡lida');
         return;
     }
 
@@ -410,12 +473,12 @@ async function handleQuantidadeChange(input, itemId, codProduto) {
         // Conferir o estoque no sistema
         await conferirEstoque(itemId, codProduto, quantidade, input);
         
-        // Focar no próximo input
+        // Focar no prÃ³ximo input
         focusNextInput(input);
         
     } catch (error) {
         console.error('Erro ao conferir estoque:', error);
-        showToast('❌ Erro ao conferir estoque');
+        showToast('âŒ Erro ao conferir estoque');
         input.classList.remove('conferencia-ok', 'conferencia-divergente');
         input.classList.add('conferencia-erro');
         setTimeout(() => {
@@ -424,7 +487,7 @@ async function handleQuantidadeChange(input, itemId, codProduto) {
     }
 }
 
-// Função para conferir estoque
+// FunÃ§Ã£o para conferir estoque
 async function conferirEstoque(itemId, codProduto, quantidadeDigitada, input) {
     try {
         // Fazer GET para conferir estoque
@@ -447,33 +510,25 @@ async function conferirEstoque(itemId, codProduto, quantidadeDigitada, input) {
         // Limpar classes anteriores
         input.classList.remove('conferencia-ok', 'conferencia-divergente', 'conferencia-erro');
         
-        // Feedback visual baseado na conferência
+        // Feedback visual baseado na conferÃªncia
         if (conferir) {
             // Quantidade diferente - precisa conferir
             input.classList.add('conferencia-divergente');
             input.dataset.temDivergencia = 'true';
-            showToast(`⚠️ Divergência! Estoque: ${estoqueReal}, Digitado: ${quantidadeDigitada}`);
         } else {
-            // Quantidade igual - não precisa conferir
+            // Quantidade igual - nÃ£o precisa conferir
             input.classList.add('conferencia-ok');
             input.dataset.temDivergencia = 'false';
-            showToast(`✓ Conferido: ${quantidadeDigitada}`);
         }
         
-        // Verificar se há divergências e mostrar botão de salvar
-        verificarDivergenciasEMostrarBotao();
-        
-        // Resetar classe após alguns segundos
-        setTimeout(() => {
-            input.classList.remove('conferencia-ok', 'conferencia-divergente');
-        }, 3000);
+        updateConcluirButtonState();
         
     } catch (error) {
         throw error;
     }
 }
 
-// Função para enviar log da contagem para a API
+// FunÃ§Ã£o para enviar log da contagem para a API
 async function enviarLogContagem(itemId, estoque, contado) {
     try {
         const logData = {
@@ -484,199 +539,40 @@ async function enviarLogContagem(itemId, estoque, contado) {
             contado: contado
         };
 
-        console.log('📤 Enviando log da contagem:', logData);
+        console.log('Enviando log da contagem:', logData);
 
         const response = await makeRequest(`${API_BASE_URL}/estoque/contagem/log`, {
             method: 'POST',
             body: JSON.stringify(logData)
         });
 
-        console.log('✅ Log enviado com sucesso:', response);
+        console.log('Log enviado com sucesso:', response);
 
     } catch (error) {
-        console.error('❌ Erro ao enviar log da contagem:', error);
+        console.error('Erro ao enviar log da contagem:', error);
         // Não interromper o fluxo principal mesmo se o log falhar
     }
 }
 
-// Função para focar no próximo input
+// FunÃ§Ã£o para focar no prÃ³ximo input
 function focusNextInput(currentInput) {
     const allInputs = document.querySelectorAll('.quantidade-input');
     const currentIndex = Array.from(allInputs).indexOf(currentInput);
     
     if (currentIndex >= 0 && currentIndex < allInputs.length - 1) {
-        const nextInput = allInputs[currentIndex + 1];
-        nextInput.focus();
-        nextInput.select();
+        let nextIndex = currentIndex + 1;
+        while (nextIndex < allInputs.length && allInputs[nextIndex].disabled) {
+            nextIndex++;
+        }
+        if (nextIndex < allInputs.length) {
+            const nextInput = allInputs[nextIndex];
+            nextInput.focus();
+            nextInput.select();
+        }
     }
 }
 
-// Função para verificar divergências e mostrar botão de salvar
-function verificarDivergenciasEMostrarBotao() {
-    console.log('🔍 verificarDivergenciasEMostrarBotao chamada');
-    
-    const totalInputs = document.querySelectorAll('.quantidade-input');
-    console.log('📊 Total inputs encontrados:', totalInputs.length);
-    
-    // Se não há inputs (todos os itens já foram conferidos), não mostrar botão
-    if (totalInputs.length === 0) {
-        console.log('❌ Nenhum input encontrado, escondendo botão');
-        salvarBtn.style.display = 'none';
-        temDivergencias = false;
-        return;
-    }
-    
-    // Verificar se todos os inputs foram preenchidos
-    const todosPreenchidos = Array.from(totalInputs).every(input => 
-        input.value && input.value.trim() !== '' && input.dataset.temDivergencia !== undefined
-    );
-    
-    console.log('✅ Todos inputs preenchidos:', todosPreenchidos);
-    
-    if (todosPreenchidos) {
-        // Verificar se há pelo menos uma divergência real
-        const inputsComDivergencia = document.querySelectorAll('.quantidade-input[data-tem-divergencia="true"]');
-        
-        console.log('⚠️ Inputs com divergência encontrados:', inputsComDivergencia.length);
-        
-        if (inputsComDivergencia.length > 0) {
-            temDivergencias = true;
-            salvarBtn.style.display = 'inline-block';
-            // salvarBtnAlt sempre visível - não controlar aqui
-            console.log(`✅ ${inputsComDivergencia.length} divergências encontradas, MOSTRANDO botão de salvar`);
-            
-            // Debug adicional do botão
-            setTimeout(() => {
-                console.log('🔍 Verificação do botão após mostrar:', {
-                    elemento: salvarBtn,
-                    display: salvarBtn.style.display,
-                    visible: salvarBtn.offsetWidth > 0 && salvarBtn.offsetHeight > 0,
-                    disabled: salvarBtn.disabled,
-                    innerHTML: salvarBtn.innerHTML,
-                    rect: salvarBtn.getBoundingClientRect()
-                });
-            }, 100);
-        } else {
-            temDivergencias = false;
-            salvarBtn.style.display = 'none';
-            // salvarBtnAlt sempre visível - não esconder
-            console.log('❌ Nenhuma divergência encontrada, ESCONDENDO botão de salvar');
-        }
-    } else {
-        salvarBtn.style.display = 'none';
-        // salvarBtnAlt sempre visível - não esconder
-        temDivergencias = false;
-        console.log('❌ Nem todos os inputs foram preenchidos, escondendo botão');
-    }
-    
-    console.log('🎯 Estado final: temDivergencias =', temDivergencias, ', botão display =', salvarBtn.style.display);
-    
-    // Função de teste - você pode chamar no console: testarBotaoSalvar()
-    window.testarBotaoSalvar = function() {
-        console.log('🧪 Testando click programático do botão salvar...');
-        if (salvarBtn) {
-            salvarBtn.click();
-        } else {
-            console.log('❌ Botão não encontrado para teste');
-        }
-    };
-    
-    // Função para forçar execução direta
-    window.forceSalvar = function() {
-        console.log('💪 FORÇANDO EXECUÇÃO DIRETA DA FUNÇÃO SALVAR');
-        handleSalvarContagem();
-    };
-    
-    // Teste automático removido conforme solicitado
-}
-
-// Função para salvar contagem (enviar para liberação)
-window.handleSalvarContagem = async function handleSalvarContagem() {
-    console.log('🔄 handleSalvarContagem iniciada');
-    
-    if (!currentContagem) {
-        console.log('❌ currentContagem não encontrada');
-        showToast('Erro: contagem não encontrada');
-        return;
-    }
-    
-    console.log('✅ currentContagem encontrada:', currentContagem);
-
-    // Verificar se algum input teve divergência
-    const inputsComDivergencia = document.querySelectorAll('.quantidade-input[data-tem-divergencia="true"]');
-    const todosInputs = document.querySelectorAll('.quantidade-input');
-    
-    console.log('📊 Total de inputs:', todosInputs.length);
-    console.log('⚠️ Inputs com divergência:', inputsComDivergencia.length);
-    
-    // Debug: listar todos os inputs e seus valores
-    todosInputs.forEach((input, index) => {
-        console.log(`Input ${index}:`, {
-            value: input.value,
-            temDivergencia: input.dataset.temDivergencia,
-            itemId: input.dataset.itemId,
-            codProduto: input.dataset.codProduto
-        });
-    });
-    
-    if (inputsComDivergencia.length === 0) {
-        console.log('❌ Nenhuma divergência encontrada, saindo da função');
-        showToast('Nenhuma divergência encontrada para salvar');
-        return;
-    }
-    
-    console.log('✅ Divergências encontradas, continuando...');
-
-    // Desabilitar botão durante o envio
-    salvarBtn.disabled = true;
-    salvarBtn.innerHTML = '<i class="material-icons">hourglass_empty</i> Salvando...';
-
-    try {
-        // Preparar o body que será enviado
-        const bodyData = {
-            contagem_cuid: currentContagem.contagem_cuid,
-            contagem: currentContagem.contagem
-        };
-        
-        const bodyJson = JSON.stringify(bodyData);
-        
-        // Log no console
-        console.log('Enviando PUT para liberar contagem:', bodyData);
-        console.log('Body JSON:', bodyJson);
-        
-        // Mostrar na tela para o usuário
-        showToast(`📤 Enviando: contagem_cuid: ${bodyData.contagem_cuid}, contagem: ${bodyData.contagem}`, '', 5000);
-        
-        // Alert detalhado (opcional - pode comentar se não quiser)
-        alert(`🔄 ENVIANDO PUT:\n\nURL: ${API_BASE_URL}/estoque/contagem/liberar\n\nBody:\n${bodyJson}`);
-
-        const response = await makeRequest(`${API_BASE_URL}/estoque/contagem/liberar`, {
-            method: 'PUT',
-            body: bodyJson
-        });
-
-        console.log('Resposta do servidor:', response);
-
-        if (response) {
-            showToast('✅ Contagem finalizada com sucesso!');
-            setTimeout(() => {
-                showContagensScreen();
-            }, 1500);
-        } else {
-            throw new Error('Resposta inválida do servidor');
-        }
-
-    } catch (error) {
-        console.error('Erro ao salvar contagem:', error);
-        showToast('❌ Erro ao finalizar contagem');
-        
-        // Restaurar botão
-        salvarBtn.disabled = false;
-        salvarBtn.innerHTML = '<i class="material-icons" style="margin-right: 8px;">save</i>Finalizar Contagem';
-    }
-}
-
-// Função para salvar todas as quantidades (exemplo)
+// para salvar todas as quantidades (exemplo)
 function salvarQuantidades() {
     const inputs = document.querySelectorAll('.quantidade-input');
     const quantidades = [];
@@ -692,11 +588,11 @@ function salvarQuantidades() {
 
     console.log('Quantidades a salvar:', quantidades);
     
-    // Aqui você implementaria a requisição para salvar no backend
+    // Aqui vocÃª implementaria a requisiÃ§Ã£o para salvar no backend
     showToast(`${quantidades.length} quantidades salvas com sucesso!`);
 }
 
-// Função para formatar data
+// FunÃ§Ã£o para formatar data
 function formatarData(dataString) {
     const data = new Date(dataString);
     return data.toLocaleDateString('pt-BR', {
@@ -708,14 +604,15 @@ function formatarData(dataString) {
     });
 }
 
-// Função para filtrar itens (exemplo de funcionalidade extra)
+// FunÃ§Ã£o para filtrar itens (exemplo de funcionalidade extra)
 function filtrarItens(texto) {
-    const rows = itensTbody.querySelectorAll('tr');
+    if (!itensList) return;
+    const cards = itensList.querySelectorAll('.item-card');
     
-    rows.forEach(row => {
-        const textoRow = row.textContent.toLowerCase();
-        const mostrar = textoRow.includes(texto.toLowerCase());
-        row.style.display = mostrar ? '' : 'none';
+    cards.forEach(card => {
+        const textoCard = card.textContent.toLowerCase();
+        const mostrar = textoCard.includes(texto.toLowerCase());
+        card.style.display = mostrar ? '' : 'none';
     });
 }
 
@@ -750,7 +647,7 @@ function adicionarPesquisa() {
     componentHandler.upgradeDom();
 }
 
-// Função para exportar dados (exemplo)
+// FunÃ§Ã£o para exportar dados (exemplo)
 function exportarDados() {
     if (!currentContagem) return;
     
@@ -783,14 +680,5 @@ function exportarDados() {
     showToast('Dados exportados com sucesso!');
 }
 
-// Adicionar botão de salvar na tela de itens
-document.addEventListener('DOMContentLoaded', function() {
-    const pageHeader = itensScreen.querySelector('.page-header');
-    const salvarBtn = document.createElement('button');
-    salvarBtn.className = 'mdl-button mdl-js-button mdl-button--raised mdl-button--colored';
-    salvarBtn.innerHTML = '<i class="material-icons">save</i> Salvar';
-    salvarBtn.onclick = salvarQuantidades;
-    salvarBtn.style.marginLeft = 'auto';
-    
-    pageHeader.appendChild(salvarBtn);
-});
+
+

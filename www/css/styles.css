@@ -1,4 +1,47 @@
-/* Reset e Base */
+/* ==============================================
+   1. FUNDAÇÃO E VARIÁVEIS DE IDENTIDADE (ROOT)
+   ============================================== */
+:root {
+    /* Identidade Visual Principal */
+    --primary-color: #3067C5;
+    --primary-dark: #2856b3;
+    --secondary-color: #B6C947;
+    --gradient-brand: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+
+    /* Cores Neutras (Paleta de Apoio) */
+    --white: #ffffff;
+    --grey-50: #f8f9fa;  /* Fundo do body */
+    --grey-100: #f1f3f5;
+    --grey-200: #e9ecef; /* Bordas suaves */
+    --grey-300: #dee2e6;
+    --grey-500: #868e96; /* Texto secundário */
+    --grey-700: #495057; /* Texto principal */
+    --grey-900: #212529; /* Títulos */
+
+    /* Cores de Feedback (Usabilidade) */
+    --success-color: #4caf50;
+    --success-light: #e8f5e8;
+    --warning-color: #ff9800;
+    --warning-light: #fff3e0;
+    --error-color: #f44336;
+    --error-light: #ffebee;
+    
+    /* Foco Acessível (Usabilidade) */
+    --focus-ring: 0 0 0 3px rgba(48, 103, 197, 0.4);
+
+    /* UI Padrão */
+    --base-font: 'Roboto', Arial, sans-serif;
+    --border-radius-sm: 6px;
+    --border-radius-md: 12px;
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+    --transition-base: all 0.25s ease-out;
+}
+
+/* ==============================================
+   2. RESET E BASE
+   ============================================== */
 * {
     margin: 0;
     padding: 0;
@@ -6,20 +49,92 @@
 }
 
 body {
-    font-family: 'Roboto', Arial, sans-serif;
-    background: #ffffff;
+    font-family: var(--base-font);
+    /* Fundo levemente acinzentado para destacar os cards brancos */
+    background: var(--grey-50); 
     min-height: 100vh;
+    color: var(--grey-700);
 }
 
-/* Layout Principal */
+/* Foco global para acessibilidade e usabilidade */
+:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+}
+
+/* ==============================================
+   3. LAYOUT PRINCIPAL E HEADER
+   ============================================== */
 .mdl-layout {
     background: transparent;
 }
 
 .mdl-layout__header {
-    background: linear-gradient(90deg, #3067C5 0%, #B6C947 100%);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    /* * Nota: O gradiente foi mantido, como no original.
+     * Considere usar 'var(--primary-color)' para um visual mais limpo 
+     * e deixar o gradiente para elementos de destaque.
+     */
+    background: var(--gradient-brand);
+    box-shadow: var(--shadow-sm);
     border-radius: 0;
+}
+
+.mdl-layout__header-row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    justify-content: space-between;
+    padding: 0 12px 0 12px;
+}
+
+.mdl-layout-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+    font-size: 26px;
+    color: var(--white);
+}
+
+.header-logo {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.header-logout {
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: var(--border-radius-md);
+    background: var(--primary-color);
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-base);
+}
+
+.header-logout .material-icons {
+    color: var(--white);
+}
+
+.header-logout:hover {
+    background: var(--primary-dark);
+    box-shadow: var(--shadow-md);
+}
+
+.header-logout:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring), var(--shadow-md);
 }
 
 .mdl-layout__content {
@@ -27,126 +142,279 @@ body {
     padding: 0;
 }
 
-/* Sistema de Telas */
+/* ==============================================
+   4. SISTEMA DE TELAS
+   ============================================== */
 .screen {
     display: none;
     min-height: calc(100vh - 64px);
-    padding: 20px;
+    padding: 24px;
 }
 
 .screen.active {
     display: block;
+    /* Animação de entrada suave para a tela */
+    animation: fadeInUp 0.5s ease-out;
 }
 
-/* Container de Conteúdo */
 .content-container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 16px;
 }
 
-/* Tela de Login */
+.login-screen-active .mdl-layout__header {
+    display: none;
+}
+
+.login-screen-active #login-screen {
+    min-height: 100vh;
+}
+
+.login-screen-active #login-screen .login-container {
+    min-height: 100vh;
+}
+
+/* ==============================================
+   5. TELA DE LOGIN
+   ============================================== */
 .login-container {
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: calc(100vh - 64px);
-    padding: 20px;
+    padding: 32px 24px;
 }
 
-.login-card {
+.login-shell {
     width: 100%;
-    max-width: 400px;
-    background: #ffffff;
-    border: 2px solid #f5f5f5;
-    border-radius: 12px;
+    max-width: 980px;
+    background: var(--white);
+    border-radius: var(--border-radius-md);
     overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    display: flex;
+    min-height: 520px;
+    border: 1px solid var(--grey-200);
+    box-shadow: var(--shadow-lg);
     animation: slideInUp 0.6s ease-out;
 }
 
-.login-card .mdl-card__title {
-    background: linear-gradient(90deg, #3067C5 0%, #B6C947 100%);
-    color: white;
-    padding: 32px 24px;
+.login-panel {
+    flex: 1;
+    display: flex;
+}
+
+.login-panel__brand {
+    background: var(--gradient-brand);
+    color: var(--white);
+    align-items: center;
+    justify-content: center;
+    padding: 48px 32px;
+}
+
+.brand-content {
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    max-width: 320px;
+}
+
+.brand-content h2 {
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.brand-text {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.login-logo {
+    width: 190px;
+    max-width: 65%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    background: none;
     border-radius: 0;
 }
 
-.login-card .mdl-card__title-text {
-    display: flex;
+.login-logo img {
+    width: 100%;
+    height: auto;
+    display: block;
+    filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.25));
+}
+
+.login-panel__form .login-logo img {
+    filter: none;
+}
+
+.login-panel__form {
+    background: var(--white);
     align-items: center;
     justify-content: center;
-    gap: 12px;
-    font-size: 28px;
-    font-weight: 300;
+    padding: 48px 40px;
+}
+
+.form-content {
+    width: 100%;
+    max-width: 360px;
+}
+
+.form-content h4 {
+    font-size: 24px;
+    color: var(--primary-color);
+    text-align: center;
+    margin-bottom: 4px;
+}
+
+.form-subtitle {
+    text-align: center;
+    color: var(--grey-500);
+    margin-bottom: 24px;
 }
 
 .login-form {
-    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
-.login-form .mdl-textfield {
+.login-input {
     width: 100%;
-    margin-bottom: 16px;
+    border: 1px solid var(--grey-200);
+    border-radius: 16px;
+    padding: 14px 16px;
+    font-size: 16px;
+    transition: var(--transition-base);
+    background: var(--white);
+    color: var(--grey-900);
+}
+
+.login-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: var(--focus-ring);
 }
 
 .login-button {
     width: 100%;
-    height: 48px;
-    margin-top: 24px;
-    border-radius: 8px;
+    margin-top: 8px;
+    border-radius: 16px;
     font-size: 16px;
-    font-weight: 500;
-    background: #3067C5;
-    color: white;
+    font-weight: 600;
+    background: var(--primary-color);
+    color: var(--white);
+    border: none;
+    cursor: pointer;
+    transition: var(--transition-base);
+    padding: 14px 16px;
+    box-shadow: 0 6px 20px rgba(48, 103, 197, 0.3);
 }
 
 .login-button:hover {
-    background: #2856b3;
+    background: var(--primary-dark);
+    box-shadow: 0 10px 26px rgba(48, 103, 197, 0.35);
+    transform: translateY(-1px);
 }
 
-/* Header da Página */
+.login-button:focus-visible {
+     box-shadow: var(--focus-ring), 0 10px 26px rgba(48, 103, 197, 0.35);
+}
+
+.login-button:disabled {
+    background: var(--grey-200);
+    color: var(--grey-500);
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+.login-logo--mobile {
+    display: none;
+    margin: 0 auto 12px auto;
+    width: 180px;
+    max-width: 70%;
+}
+
+#login-loading {
+    margin: 8px auto 0 auto;
+}
+
+/* ==============================================
+   6. CABEÇALHO DA PÁGINA E CARDS DE INFO
+   ============================================== */
 .page-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 24px;
-    padding: 16px 0;
+    padding-bottom: 16px; /* Adicionado padding inferior */
+    border-bottom: 1px solid var(--grey-200); /* Separador visual */
 }
 
 .page-title {
     display: flex;
     align-items: center;
     gap: 12px;
-    color: #333;
+    color: var(--grey-900); /* Cor mais escura para hierarquia */
     font-weight: 500;
+    font-size: 24px; /* Tamanho consistente */
     margin: 0;
 }
 
 .page-title .material-icons {
     font-size: 32px;
+    color: var(--primary-color); /* Ícone com a cor primária */
 }
 
-/* Card de Informações do Usuário */
-.user-info-card {
+.contagem-info-card {
     width: 100%;
     margin-bottom: 24px;
-    border-radius: 12px;
-    background: #ffffff;
-    border: 2px solid #f0f0f0;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    border-radius: var(--border-radius-md);
+    background: var(--white);
+    border: 1px solid var(--grey-200); /* Borda mais suave */
+    box-shadow: var(--shadow-sm); /* Sombra mais sutil */
 }
 
-.user-info-card .mdl-card__supporting-text {
+.contagem-info-card .mdl-card__supporting-text {
     padding: 20px;
+    font-size: 16px;
+    color: var(--grey-700);
+    line-height: 1.4;
+}
+
+.contagem-heading {
     font-size: 18px;
     font-weight: 500;
-    color: #333;
-    text-align: center;
+    color: var(--grey-900);
+    margin: 8px 0 12px;
 }
 
-/* Grid de Contagens */
+.user-greeting {
+    margin: 12px 0 4px;
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--grey-900);
+}
+
+/* ==============================================
+   7. GRID DE ITENS (Contagens)
+   ============================================== */
 .contagens-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -155,27 +423,37 @@ body {
 }
 
 .contagem-card {
-    background: #ffffff;
-    border: 2px solid #e8e8e8;
-    border-radius: 12px;
+    background: var(--white);
+    border: 1px solid var(--grey-200);
+    border-radius: var(--border-radius-md);
     overflow: hidden;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: var(--transition-base);
     animation: fadeInUp 0.5s ease-out;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    box-shadow: var(--shadow-sm);
 }
 
 .contagem-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-    border-color: #d0d0d0;
+    transform: translateY(-4px); /* Efeito de "lift" maior */
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary-color); /* Destaca com cor primária no hover */
 }
 
+.contagem-card:focus-visible {
+    transform: translateY(-4px);
+    box-shadow: var(--focus-ring), var(--shadow-lg);
+    border-color: var(--primary-color);
+}
+
+/* * Título do Card simplificado para UI mais limpa.
+ * O gradiente em muitos cards pequenos cria ruído visual.
+ * Um título limpo melhora a escaneabilidade.
+ */
 .contagem-card .mdl-card__title {
-    background: linear-gradient(90deg, #3067C5 0%, #B6C947 100%);
-    color: white;
+    background: none; /* REMOVIDO o gradiente daqui */
+    color: var(--grey-900); /* Título escuro */
     padding: 20px;
-    border-radius: 0;
+    border-bottom: 1px solid var(--grey-100); /* Separador interno */
 }
 
 .contagem-card .mdl-card__title-text {
@@ -189,66 +467,235 @@ body {
 
 .contagem-info {
     margin-bottom: 8px;
+    font-size: 15px; /* Tamanho de texto base */
 }
 
 .contagem-info strong {
-    color: #3067C5;
+    color: var(--primary-color); /* Mantém o destaque azul */
 }
 
 .contagem-date {
-    color: #666;
+    color: var(--grey-500); /* Cor secundária para data */
     font-size: 14px;
 }
 
-/* Card de Info da Contagem */
-.contagem-info-card {
-    width: 100%;
-    margin-bottom: 24px;
-    border-radius: 12px;
-    background: #ffffff;
-    border: 2px solid #f0f0f0;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-}
-
-.contagem-info-card .mdl-card__supporting-text {
-    padding: 20px;
-    font-size: 16px;
-    color: #333;
-}
-
-/* Tabela de Itens */
+/* ==============================================
+   8. TABELA DE ITENS
+   ============================================== */
 .table-container {
-    background: #ffffff;
-    border: 2px solid #f0f0f0;
-    border-radius: 12px;
-    overflow: hidden;
+    background: var(--white);
+    border: 1px solid var(--grey-200);
+    border-radius: var(--border-radius-md);
+    overflow: hidden; /* Garante que o radius funcione */
     margin-top: 20px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    box-shadow: var(--shadow-sm);
+    overflow-x: auto; /* Adicionado para responsividade */
+    max-height: calc(100vh - 360px);
+    overflow-y: auto;
+}
+
+.itens-card-container {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    overflow: visible;
+    overflow-x: visible;
+    max-height: none;
+}
+
+.itens-card-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.item-card {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 18px 20px;
+    border: 1px solid var(--grey-200);
+    border-radius: var(--border-radius-md);
+    background: var(--white);
+    box-shadow: var(--shadow-sm);
+    animation: fadeInUp 0.3s ease-out;
+    min-height: 170px;
+}
+
+.item-card__info {
+    flex: 1;
+}
+
+.item-card__title {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--grey-900);
+}
+
+.item-code {
+    color: var(--primary-color);
+}
+
+.item-desc {
+    flex: 1;
+    min-width: 180px;
+}
+
+.item-card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 6px;
+    font-size: 14px;
+    color: var(--grey-500);
+}
+
+.item-card__meta strong {
+    color: var(--grey-900);
+}
+
+.item-card__actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.quantity-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.quantity-wrapper label {
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--grey-900);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.quantidade-input {
+    width: 90px;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--grey-900);
+    background: var(--grey-50);
+    border-width: 2px;
+}
+
+.item-save-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    border-radius: var(--border-radius-md);
+    border: none;
+    background: var(--primary-color);
+    color: var(--white);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-base);
+}
+
+.item-save-btn i {
+    font-size: 18px;
+}
+
+.item-save-btn:hover {
+    background: var(--primary-dark);
+}
+
+.item-save-btn.item-edit-btn {
+    background: var(--grey-200);
+    color: var(--grey-900);
+    border: 1px dashed var(--grey-300);
+}
+
+.item-save-btn.item-edit-btn:hover {
+    background: var(--grey-300);
+}
+
+.item-card--saved {
+    background: var(--grey-100);
+    border-color: var(--grey-200);
+    opacity: 0.9;
+}
+
+.item-card--saved .item-desc {
+    color: var(--grey-500);
+}
+
+.item-card--saved .item-save-btn {
+    background: var(--grey-200);
+    color: var(--grey-700);
+}
+
+.itens-empty {
+    padding: 32px;
+    border-radius: var(--border-radius-md);
+    background: var(--white);
+    border: 1px dashed var(--grey-300);
+    text-align: center;
+    color: var(--grey-600);
+}
+
+.itens-empty i {
+    font-size: 40px;
+    color: var(--primary-color);
+    margin-bottom: 12px;
+    display: block;
+}
+
+.itens-empty.sucesso i {
+    color: var(--success-color);
+}
+
+@media (max-width: 992px) {
+    .itens-card-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
 .itens-table {
     width: 100%;
-    border: none;
+    border-collapse: collapse; /* Bordas mais limpas */
     background: transparent;
 }
 
+/* * Header da Tabela mais limpo, usando a cor primária sólida.
+ * Novamente, o gradiente aqui é desnecessário e "suja" a UI de dados.
+ */
 .itens-table thead {
-    background: linear-gradient(90deg, #3067C5 0%, #B6C947 100%);
+    background: var(--primary-color);
 }
 
 .itens-table thead th {
-    color: white !important;
+    color: var(--white) !important;
     font-weight: 500;
     padding: 16px 12px;
     border: none;
+    text-align: left; /* Alinhamento padrão */
 }
 
 .itens-table tbody tr {
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--grey-200); /* Borda mais suave */
     transition: background-color 0.2s ease;
 }
 
+.itens-table tbody tr:last-child {
+    border-bottom: none; /* Remove borda do último item */
+}
+
 .itens-table tbody tr:hover {
+    /* Tom de azul bem claro para hover, melhor que o cinza */
     background-color: rgba(48, 103, 197, 0.05);
 }
 
@@ -256,28 +703,35 @@ body {
     padding: 16px 12px;
     border: none;
     vertical-align: middle;
+    color: var(--grey-700);
+    white-space: normal;
+    word-break: break-word;
 }
 
 .produto-info {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
 }
 
 .produto-nome {
     font-weight: 500;
-    color: #333;
-    margin-bottom: 4px;
+    color: var(--grey-900); /* Destaque para o nome */
+    margin-bottom: 0;
 }
 
 .produto-detalhes {
     font-size: 12px;
-    color: #666;
+    color: var(--grey-500);
 }
 
+/* * Badge simplificado. O gradiente em um elemento tão pequeno
+ * é ilegível. Usar a cor secundária (verde) o torna um 
+ * destaque visual útil, conforme a identidade.
+ */
 .localizacao-badge {
-    background: linear-gradient(90deg, #3067C5 0%, #B6C947 100%);
-    color: white;
+    background: var(--secondary-color);
+    color: var(--grey-900); /* Texto escuro é mais legível no verde-limão */
     padding: 6px 12px;
     border-radius: 20px;
     font-size: 12px;
@@ -285,40 +739,171 @@ body {
     display: inline-block;
 }
 
+/* Área de ações de salvamento */
+.save-actions {
+    margin-top: 24px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.primary-save-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 28px;
+    border-radius: var(--border-radius-md);
+    border: none;
+    background: var(--success-color);
+    color: var(--white);
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-base);
+    box-shadow: var(--shadow-sm);
+}
+
+.primary-save-btn.secondary {
+    background: #66bb6a;
+    color: var(--white);
+}
+
+.primary-save-btn:hover {
+    background: #43a047;
+    box-shadow: var(--shadow-md);
+}
+
+.primary-save-btn.secondary:hover {
+    background: #57a05c;
+}
+
+.primary-save-btn i {
+    font-size: 20px;
+}
+
+.primary-save-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+#itens-screen .content-container {
+    display: block;
+}
+
+#itens-screen .table-container {
+    flex: initial;
+}
+
+/* ==============================================
+   9. INPUTS E FEEDBACK (Usabilidade)
+   ============================================== */
+
+/* Estilo moderno para inputs do MDL */
+.mdl-textfield__input {
+    border-bottom: 2px solid var(--grey-300);
+    transition: var(--transition-base);
+}
+
+.mdl-textfield.is-focused .mdl-textfield__input {
+    border-bottom-color: var(--primary-color);
+    box-shadow: none; /* Remove shadow do focus padrão do MDL */
+}
+
+.mdl-textfield__label {
+    color: var(--grey-500);
+}
+
+.mdl-textfield.is-focused .mdl-textfield__label {
+    color: var(--primary-color);
+}
+
+.mdl-textfield.is-invalid .mdl-textfield__input {
+    border-color: var(--error-color);
+}
+
 /* Input de Quantidade */
 .quantidade-input {
     width: 80px;
     padding: 8px;
-    border: 2px solid #e0e0e0;
-    border-radius: 6px;
+    border: 2px solid var(--grey-300);
+    border-radius: var(--border-radius-sm);
     text-align: center;
     font-size: 16px;
     font-weight: 500;
-    transition: border-color 0.2s ease;
+    transition: var(--transition-base);
 }
 
 .quantidade-input:focus {
     outline: none;
-    border-color: #3067C5;
+    border-color: var(--primary-color);
+    box-shadow: var(--focus-ring);
+    background: #fff;
 }
 
-/* Estados de conferência */
+/* Estados de conferência (Usando as variáveis de feedback) */
 .quantidade-input.conferencia-ok {
-    border-color: #4caf50;
-    background-color: #e8f5e8;
+    border-color: var(--success-color);
+    background-color: var(--success-light);
+    color: var(--success-color);
 }
 
 .quantidade-input.conferencia-divergente {
-    border-color: #ff9800;
-    background-color: #fff3e0;
+    border-color: var(--warning-color);
+    background-color: var(--warning-light);
+    color: var(--warning-color);
 }
 
 .quantidade-input.conferencia-erro {
-    border-color: #f44336;
-    background-color: #ffebee;
+    border-color: var(--error-color);
+    background-color: var(--error-light);
+    color: var(--error-color);
 }
 
-/* Loading */
+.error-message {
+    color: var(--error-color);
+    font-size: 14px;
+    margin-top: 8px;
+    text-align: center;
+}
+
+/* ==============================================
+   10. BOTÕES MDL E CUSTOMIZADOS
+   ============================================== */
+
+/* Botões raised e colored do MDL (Padrão Primário) */
+.mdl-button--raised,
+.mdl-button--colored {
+    background-color: var(--primary-color) !important;
+    color: var(--white) !important;
+    border-radius: var(--border-radius-sm);
+    transition: var(--transition-base);
+}
+
+.mdl-button--raised:hover,
+.mdl-button--colored:hover {
+    background-color: var(--primary-dark) !important;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Botões de ícone no header */
+.mdl-layout__header .mdl-button--icon {
+    color: var(--white);
+}
+.mdl-layout__header .mdl-button--icon:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Botões de ação específicos (logout, voltar) */
+#logout-btn,
+#back-btn {
+    /* Herdando o estilo de .mdl-button--raised */
+    border-radius: var(--border-radius-sm);
+}
+
+/* ==============================================
+   11. ELEMENTOS DE UI (Loading, Snackbar)
+   ============================================== */
 .loading-center {
     display: flex;
     justify-content: center;
@@ -326,17 +911,15 @@ body {
     padding: 40px;
 }
 
-#login-loading {
-    margin: 16px auto;
-}
-
-/* Toast Customizado */
 .mdl-snackbar {
-    background: #323232;
-    border-radius: 8px;
+    background: var(--grey-900); /* Cor escura padrão */
+    border-radius: var(--border-radius-sm);
+    box-shadow: var(--shadow-lg);
 }
 
-/* Animações */
+/* ==============================================
+   12. ANIMAÇÕES
+   ============================================== */
 @keyframes slideInUp {
     from {
         opacity: 0;
@@ -359,10 +942,16 @@ body {
     }
 }
 
-/* Responsividade */
+/* ==============================================
+   13. RESPONSIVIDADE
+   ============================================== */
 @media (max-width: 768px) {
     .content-container {
         padding: 0 8px;
+    }
+
+    .screen {
+        padding: 16px;
     }
     
     .page-header {
@@ -372,28 +961,78 @@ body {
     }
     
     .contagens-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr; /* Coluna única */
         gap: 16px;
+        display: flex;
+        flex-direction: column;
+        margin: 0 -8px; /* ocupa toda a largura visual */
+    }
+
+    .contagem-card {
+        width: 100%;
+        border-radius: var(--border-radius-md);
+        min-height: 200px;
+    }
+    
+    #itens-screen .content-container {
+        height: auto;
+    }
+    
+    .table-container {
+        max-height: none;
+    }
+    
+    .itens-card-list {
+        grid-template-columns: 1fr;
+    }
+    
+    .item-card {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .item-card__actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .quantity-wrapper {
+        flex-direction: row;
+        align-items: center;
+    }
+    
+    .save-actions {
+        flex-direction: column;
+        align-items: stretch;
     }
     
     .login-container {
         padding: 16px;
+        align-items: flex-start; /* Permite scroll se o teclado abrir */
     }
     
-    .login-card {
-        margin: 0;
+    .login-shell {
+        flex-direction: column;
+        min-height: auto;
+        border-radius: var(--border-radius-md);
     }
     
-    .table-container {
-        overflow-x: auto;
+    .login-panel__brand {
+        display: none;
     }
     
-    .itens-table {
-        min-width: 600px;
+    .login-panel__form {
+        padding: 32px 20px;
+    }
+    
+    .login-logo--mobile {
+        display: flex;
+        width: 170px;
+        max-width: 70%;
     }
     
     .quantidade-input {
-        width: 60px;
+        width: 80px; /* Pouco menor */
     }
 }
 
@@ -410,135 +1049,44 @@ body {
         font-size: 24px;
     }
     
-    .login-card .mdl-card__title-text {
-        font-size: 24px;
+    .login-panel__form {
+        padding: 24px 16px;
     }
     
-    .contagem-card .mdl-card__title {
-        padding: 16px;
-    }
-    
+    .contagem-card .mdl-card__title,
     .contagem-card .mdl-card__supporting-text {
         padding: 16px;
     }
-}
 
-/* Estados de Erro */
-.error-message {
-    color: #f44336;
-    font-size: 14px;
-    margin-top: 8px;
-    text-align: center;
-}
+    .contagens-grid {
+        margin: 0 -12px;
+    }
 
-.mdl-textfield.is-invalid .mdl-textfield__input {
-    border-color: #f44336;
-}
+    .contagem-card {
+        min-height: 220px;
+        border-radius: var(--border-radius-md);
+    }
 
-/* Botões customizados */
-.mdl-button--icon {
-    color: white;
-}
+    .table-container {
+        max-height: none;
+    }
 
-.mdl-button--icon:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    .save-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .item-card__actions {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .quantity-wrapper {
+        width: 100%;
+        justify-content: space-between;
+    }
 }
-
-/* Botão de logout específico */
-#logout-btn {
-    background-color: #3067C5;
-    color: white;
-    border-radius: 4px;
-}
-
-#logout-btn:hover {
-    background-color: #2856b3;
-}
-
-/* Botão de voltar */
-#back-btn {
-    background-color: #3067C5;
-    color: white;
-    border-radius: 4px;
-}
-
-#back-btn:hover {
-    background-color: #2856b3;
-}
-
-/* Todos os botões raised do MDL */
-.mdl-button--raised {
-    background-color: #3067C5 !important;
-    color: white !important;
-}
-
-.mdl-button--raised:hover {
-    background-color: #2856b3 !important;
-}
-
-/* Botões colored do MDL */
-.mdl-button--colored {
-    background-color: #3067C5 !important;
-    color: white !important;
-}
-
-.mdl-button--colored:hover {
-    background-color: #2856b3 !important;
-}
-
-/* Botão de salvar */
-#salvar-btn {
-    padding: 12px 32px;
-    font-size: 16px;
-    font-weight: 500;
-    min-width: 200px;
-}
-
-#salvar-btn:disabled {
-    background-color: #ccc !important;
-    color: #666 !important;
-    cursor: not-allowed;
-}
-
-/* Melhorias visuais */
-.mdl-card {
-    border-radius: 12px;
-}
-
-.mdl-shadow--2dp {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-}
-
-.mdl-shadow--6dp {
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-}
-
-/* Estilo moderno para inputs */
-.mdl-textfield__input {
-    border-bottom: 2px solid #e0e0e0;
-    transition: border-color 0.3s ease;
-}
-
-.mdl-textfield.is-focused .mdl-textfield__input {
-    border-bottom-color: #3067C5;
-}
-
-.mdl-textfield__label {
-    color: #666;
-}
-
-.mdl-textfield.is-focused .mdl-textfield__label {
-    color: #3067C5;
-}
-
-/* Botões modernos */
-.login-button {
-    background: #3067C5;
-    box-shadow: 0 4px 12px rgba(48, 103, 197, 0.3);
-    color: white;
-}
-
-.login-button:hover {
-    background: #2856b3;
-    box-shadow: 0 6px 16px rgba(48, 103, 197, 0.4);
-}
+    .contagem-heading {
+        text-align: center;
+    }
