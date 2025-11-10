@@ -438,6 +438,9 @@ async function conferirEstoque(itemId, codProduto, quantidadeDigitada, input) {
             })
         });
         
+        // Enviar log da contagem para a API
+        await enviarLogContagem(itemId, estoqueReal, quantidadeDigitada);
+        
         // Limpar classes anteriores
         input.classList.remove('conferencia-ok', 'conferencia-divergente', 'conferencia-erro');
         
@@ -464,6 +467,32 @@ async function conferirEstoque(itemId, codProduto, quantidadeDigitada, input) {
         
     } catch (error) {
         throw error;
+    }
+}
+
+// Função para enviar log da contagem para a API
+async function enviarLogContagem(itemId, estoque, contado) {
+    try {
+        const logData = {
+            contagem_id: currentContagem.id,
+            usuario_id: currentUser.id,
+            item_id: itemId,
+            estoque: estoque,
+            contado: contado
+        };
+
+        console.log('📤 Enviando log da contagem:', logData);
+
+        const response = await makeRequest(`${API_BASE_URL}/estoque/contagem/log`, {
+            method: 'POST',
+            body: JSON.stringify(logData)
+        });
+
+        console.log('✅ Log enviado com sucesso:', response);
+
+    } catch (error) {
+        console.error('❌ Erro ao enviar log da contagem:', error);
+        // Não interromper o fluxo principal mesmo se o log falhar
     }
 }
 
