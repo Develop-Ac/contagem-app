@@ -20,7 +20,15 @@
         <!-- Header -->
         <header class="mdl-layout__header">
             <div class="mdl-layout__header-row">
-                <span class="mdl-layout-title">Sistema de Contagem</span>
+                <span class="mdl-layout-title">
+                    <img src="css/assets/logo_icon.png" alt="Logo AC" class="header-logo">
+                    Sistema de Contagem
+                </span>
+                <div class="header-actions">
+                    <button id="logout-btn" class="header-logout" type="button">
+                        <i class="material-icons">power_settings_new</i>
+                    </button>
+                </div>
             </div>
         </header>
 
@@ -30,37 +38,37 @@
             <!-- Tela de Login -->
             <div id="login-screen" class="screen active">
                 <div class="login-container">
-                    <div class="mdl-card mdl-shadow--6dp login-card">
-                        <div class="mdl-card__title mdl-card--expand">
-                            <h2 class="mdl-card__title-text">
-                                <i class="material-icons">account_circle</i>
-                                Login
-                            </h2>
+                    <div class="login-shell">
+                        <div class="login-panel login-panel__brand">
+                            <div class="brand-content">
+                                <div class="login-logo">
+                                    <img src="css/assets/logo_completa.png" alt="AC Acessórios">
+                                </div>
+                                <h2>Bem-vindo ao Sistema de Contagem</h2>
+                                <p class="brand-text">Acesse com suas credenciais.</p>
+                            </div>
                         </div>
-                        
-                        <div class="mdl-card__supporting-text">
-                            <form id="login-form" class="login-form">
-                                <!-- Campo Código -->
-                                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                                    <input class="mdl-textfield__input" type="text" id="codigo" name="codigo" required>
-                                    <label class="mdl-textfield__label" for="codigo">Código do Usuário</label>
+                        <div class="login-panel login-panel__form">
+                            <div class="form-content">
+                                <div class="login-logo login-logo--mobile">
+                                    <img src="css/assets/logo_completa.png" alt="AC Acessórios">
                                 </div>
-                                
-                                <!-- Campo Senha -->
-                                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                                    <input class="mdl-textfield__input" type="password" id="senha" name="senha" required>
-                                    <label class="mdl-textfield__label" for="senha">Senha</label>
-                                </div>
-                                
-                                <!-- Loading Spinner -->
-                                <div id="login-loading" class="mdl-spinner mdl-js-spinner" style="display: none;"></div>
-                                
-                                <!-- Botão de Login -->
-                                <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-button--accent login-button">
-                                    <i class="material-icons">login</i>
-                                    Entrar
-                                </button>
-                            </form>
+                                <h4>Vamos iniciar</h4>
+                                <p class="form-subtitle">Entre com sua conta</p>
+                                <form id="login-form" class="login-form">
+                                    <label class="sr-only" for="codigo">Código do Usuário</label>
+                                    <input class="login-input" type="text" id="codigo" name="codigo" placeholder="Código do Usuário" required>
+
+                                    <label class="sr-only" for="senha">Senha</label>
+                                    <input class="login-input" type="password" id="senha" name="senha" placeholder="Senha" required>
+
+                                    <div id="login-loading" class="mdl-spinner mdl-js-spinner" style="display: none;"></div>
+
+                                    <button type="submit" class="login-button">
+                                        Entrar
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -69,20 +77,14 @@
             <!-- Tela de Listagem de Contagens -->
             <div id="contagens-screen" class="screen">
                 <div class="content-container">
+                    <div id="user-info" class="user-greeting">
+                        <span id="user-name">Carregando...</span>
+                    </div>
+
                     <div class="page-header">
                         <h3 class="page-title">
-                            <i class="material-icons">list</i>
-                            Minhas Contagens
+                            Minhas Tarefas
                         </h3>
-                        <button id="logout-btn" class="mdl-button mdl-js-button mdl-button--icon">
-                            <i class="material-icons">logout</i>
-                        </button>
-                    </div>
-                    
-                    <div id="user-info" class="user-info-card mdl-card mdl-shadow--2dp">
-                        <div class="mdl-card__supporting-text">
-                            <span id="user-name">Carregando...</span>
-                        </div>
                     </div>
                     
                     <div id="contagens-loading" class="loading-center">
@@ -106,46 +108,29 @@
                         </h3>
                     </div>
                     
-                    <div id="contagem-info" class="contagem-info-card mdl-card mdl-shadow--2dp">
-                        <div class="mdl-card__supporting-text">
-                            <span id="contagem-details">Carregando...</span>
-                        </div>
+                    <div class="contagem-heading">
+                        <span id="contagem-heading">Contagem #--</span>
                     </div>
                     
                     <div id="itens-loading" class="loading-center">
                         <div class="mdl-spinner mdl-js-spinner is-active"></div>
                     </div>
                     
-                    <div id="itens-table-container" class="table-container">
-                        <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp itens-table">
-                            <thead>
-                                <tr>
-                                    <th class="mdl-data-table__cell--non-numeric">Produto</th>
-                                    <th class="mdl-data-table__cell--numeric">Código</th>
-                                    <th class="mdl-data-table__cell--non-numeric">Localização</th>
-                                    <th class="mdl-data-table__cell--non-numeric">Sub Locação</th>
-                                    <th class="mdl-data-table__cell--numeric">Quantidade</th>
-                                </tr>
-                            </thead>
-                            <tbody id="itens-tbody">
-                            </tbody>
-                        </table>
+                    <div id="itens-card-container" class="table-container itens-card-container">
+                        <div id="itens-list" class="itens-card-list"></div>
                     </div>
                     
                     <!-- Botão Salvar -->
-                    <div style="margin-top: 24px; text-align: center;">
-                        <button id="salvar-btn" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" style="display: none;" onclick="console.log('🖱️ ONCLICK HTML ATIVADO!'); handleSalvarContagem();">
-                            Finalizar Contagem
+                    <div class="save-actions">
+                        <button id="salvar-btn" class="primary-save-btn" disabled onclick="handleSalvarContagem();">
+                            <i class="material-icons">save</i>
+                            Concluir Contagem
                         </button>
-                        
-                        <!-- Botão alternativo para teste -->
-                        <button id="salvar-btn-alt" style="margin-left: 10px; padding: 12px 24px; background: #3067C5; color: white; border: none; border-radius: 4px; cursor: pointer;" onclick="console.log('🖱️ BOTÃO ALTERNATIVO CLICADO!'); window.handleSalvarContagem();">
-                            🔄 SALVAR
-                        </button>
-                        
+
                     </div>
                 </div>
             </div>
+
 
         </main>
     </div>
