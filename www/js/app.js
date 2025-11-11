@@ -338,8 +338,16 @@ function renderItens(itens) {
     }
 
     // Filtrar apenas itens com conferir = true
-    const itensParaConferir = itens.filter(item => item.conferir === true);
-    
+    let itensParaConferir = itens.filter(item => item.conferir === true);
+
+    // Ordenar por localização de forma crescente e numérica
+    itensParaConferir = itensParaConferir.sort((a, b) => {
+        // Extrai os números da localização (ex: V702D01 -> 702, V802D01 -> 802)
+        const numA = parseInt(a.localizacao.replace(/[^0-9]/g, ''));
+        const numB = parseInt(b.localizacao.replace(/[^0-9]/g, ''));
+        return numA - numB;
+    });
+
     if (itensParaConferir.length === 0) {
         const row = document.createElement('tr');
         row.innerHTML = `
