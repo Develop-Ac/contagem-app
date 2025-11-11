@@ -338,8 +338,16 @@ function renderItens(itens) {
     }
 
     // Filtrar apenas itens com conferir = true
-    const itensParaConferir = itens.filter(item => item.conferir === true);
-    
+    let itensParaConferir = itens.filter(item => item.conferir === true);
+
+    // Ordenar pela localização da esquerda para a direita (ordem alfanumérica completa)
+    itensParaConferir = itensParaConferir.sort((a, b) => {
+        const locA = a.localizacao || '';
+        const locB = b.localizacao || '';
+        // Utiliza localeCompare com opção numeric para comparar cada caractere da esquerda para a direita
+        return locA.localeCompare(locB, undefined, { numeric: true, sensitivity: 'base' });
+    });
+
     if (itensParaConferir.length === 0) {
         const doneState = document.createElement('div');
         doneState.className = 'itens-empty sucesso';
