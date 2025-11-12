@@ -487,15 +487,10 @@ function renderItens(itens) {
         }
     });
 
-    // Ordena os cards de locação e sub locação separadamente em ordem crescente
-    cardsLoc.sort((a, b) => a.sortVal.localeCompare(b.sortVal, undefined, { numeric: true, sensitivity: 'base' }));
-    cardsSub.sort((a, b) => a.sortVal.localeCompare(b.sortVal, undefined, { numeric: true, sensitivity: 'base' }));
-
-    // Adiciona primeiro todos os cards de locação, depois os de sub locação
-    cardsLoc.forEach(cardObj => {
-        itensList.appendChild(cardObj.el);
-    });
-    cardsSub.forEach(cardObj => {
+    // Junta todos os cards e ordena em ordem crescente
+    const allCards = [...cardsLoc, ...cardsSub];
+    allCards.sort((a, b) => a.sortVal.localeCompare(b.sortVal, undefined, { numeric: true, sensitivity: 'base' }));
+    allCards.forEach(cardObj => {
         itensList.appendChild(cardObj.el);
     });
 
