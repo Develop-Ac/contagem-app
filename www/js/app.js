@@ -1,5 +1,5 @@
 ﻿// ConfiguraÃ§Ã£o da API
-const API_BASE_URL = 'https://intranetbackend.acacessorios.local';
+const API_BASE_URL = 'http://intranetbackend.acacessorios.local';
 
 // Estado da aplicaÃ§Ã£o
 let currentUser = null;
