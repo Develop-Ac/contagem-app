@@ -340,13 +340,7 @@ function renderItens(itens) {
     // Filtrar apenas itens com conferir = true
     let itensParaConferir = itens.filter(item => item.conferir === true);
 
-    // Ordenar pela localização da esquerda para a direita (ordem alfanumérica completa)
-    itensParaConferir = itensParaConferir.sort((a, b) => {
-        const locA = a.localizacao || '';
-        const locB = b.localizacao || '';
-        // Utiliza localeCompare com opção numeric para comparar cada caractere da esquerda para a direita
-        return locA.localeCompare(locB, undefined, { numeric: true, sensitivity: 'base' });
-    });
+    // NÃO ordenar antes de gerar os cards
 
     if (itensParaConferir.length === 0) {
         const doneState = document.createElement('div');
@@ -361,8 +355,9 @@ function renderItens(itens) {
     }
 
     let cardIndex = 0;
+    const cardsLoc = [];
+    const cardsSub = [];
     itensParaConferir.forEach((item) => {
-        // Se tem sub locação, cria dois cards
         if (item.aplicacoes) {
             // Card para localização principal
             const cardLoc = document.createElement('div');
@@ -400,7 +395,10 @@ function renderItens(itens) {
                     </button>
                 </div>
             `;
-            itensList.appendChild(cardLoc);
+            cardsLoc.push({
+                el: cardLoc,
+                sortVal: (item.localizacao || '')
+            });
             cardIndex++;
 
             // Card para sub locação
@@ -439,7 +437,10 @@ function renderItens(itens) {
                     </button>
                 </div>
             `;
-            itensList.appendChild(cardSub);
+            cardsSub.push({
+                el: cardSub,
+                sortVal: (item.aplicacoes || '')
+            });
             cardIndex++;
         } else {
             // Card único para itens sem sub locação
@@ -478,9 +479,24 @@ function renderItens(itens) {
                     </button>
                 </div>
             `;
-            itensList.appendChild(card);
+            cardsLoc.push({
+                el: card,
+                sortVal: (item.localizacao || '')
+            });
             cardIndex++;
         }
+    });
+
+    // Ordena os cards de locação e sub locação separadamente em ordem crescente
+    cardsLoc.sort((a, b) => a.sortVal.localeCompare(b.sortVal, undefined, { numeric: true, sensitivity: 'base' }));
+    cardsSub.sort((a, b) => a.sortVal.localeCompare(b.sortVal, undefined, { numeric: true, sensitivity: 'base' }));
+
+    // Adiciona primeiro todos os cards de locação, depois os de sub locação
+    cardsLoc.forEach(cardObj => {
+        itensList.appendChild(cardObj.el);
+    });
+    cardsSub.forEach(cardObj => {
+        itensList.appendChild(cardObj.el);
     });
 
     componentHandler.upgradeDom();
