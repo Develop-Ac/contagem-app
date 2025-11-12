@@ -360,48 +360,127 @@ function renderItens(itens) {
         return;
     }
 
-    itensParaConferir.forEach((item, index) => {
-        const card = document.createElement('div');
-        card.className = 'item-card';
-        card.dataset.itemId = item.id;
-        card.style.animationDelay = `${index * 0.05}s`;
-
-        const subLocal = item.sub_localizacao || item.aplicacoes || '-';
-        const localizacao = item.localizacao || '-';
-
-        card.innerHTML = `
-            <div class="item-card__info">
-                <div class="item-card__title">
-                    <span class="item-code">#${item.cod_produto}</span>
-                    <span class="item-desc">${item.desc_produto || '-'}</span>
+    let cardIndex = 0;
+    itensParaConferir.forEach((item) => {
+        // Se tem sub locação, cria dois cards
+        if (item.aplicacoes) {
+            // Card para localização principal
+            const cardLoc = document.createElement('div');
+            cardLoc.className = 'item-card';
+            cardLoc.dataset.itemId = item.id + '_loc';
+            cardLoc.style.animationDelay = `${cardIndex * 0.05}s`;
+            cardLoc.innerHTML = `
+                <div class="item-card__info">
+                    <div class="item-card__title">
+                        <span class="item-code">#${item.cod_produto}</span>
+                        <span class="item-desc">${item.desc_produto || '-'} (Locação)</span>
+                    </div>
+                    <div class="item-card__meta">
+                        <span>Localização: <strong>${item.localizacao || '-'}</strong></span>
+                    </div>
                 </div>
-                <div class="item-card__meta">
-                    <span>Localização: <strong>${localizacao}</strong></span>
-                    <span>Sub: <strong>${subLocal}</strong></span>
+                <div class="item-card__actions">
+                    <div class="quantity-wrapper">
+                        <label>Qtd</label>
+                        <input 
+                            type="number" 
+                            class="quantidade-input" 
+                            placeholder="0"
+                            min="0"
+                            step="1"
+                            data-item-id="${item.id}"
+                            data-cod-produto="${item.cod_produto}"
+                            data-tipo="locacao"
+                            onblur="handleQuantidadeChange(this, '${item.id}', '${item.cod_produto}')"
+                        >
+                    </div>
+                    <button type="button" class="item-save-btn" data-mode="save" onclick="toggleItemSave(this)">
+                        <i class="material-icons">check</i>
+                        Salvar
+                    </button>
                 </div>
-            </div>
-            <div class="item-card__actions">
-                <div class="quantity-wrapper">
-                    <label>Qtd</label>
-                    <input 
-                        type="number" 
-                        class="quantidade-input" 
-                        placeholder="0"
-                        min="0"
-                        step="1"
-                        data-item-id="${item.id}"
-                        data-cod-produto="${item.cod_produto}"
-                        onblur="handleQuantidadeChange(this, '${item.id}', '${item.cod_produto}')"
-                    >
-                </div>
-                <button type="button" class="item-save-btn" data-mode="save" onclick="toggleItemSave(this)">
-                    <i class="material-icons">check</i>
-                    Salvar
-                </button>
-            </div>
-        `;
+            `;
+            itensList.appendChild(cardLoc);
+            cardIndex++;
 
-        itensList.appendChild(card);
+            // Card para sub locação
+            const cardSub = document.createElement('div');
+            cardSub.className = 'item-card';
+            cardSub.dataset.itemId = item.id + '_sub';
+            cardSub.style.animationDelay = `${cardIndex * 0.05}s`;
+            cardSub.innerHTML = `
+                <div class="item-card__info">
+                    <div class="item-card__title">
+                        <span class="item-code">#${item.cod_produto}</span>
+                        <span class="item-desc">${item.desc_produto || '-'} (Sub Locação)</span>
+                    </div>
+                    <div class="item-card__meta">
+                        <span>Sub Locação: <strong>${item.aplicacoes}</strong></span>
+                    </div>
+                </div>
+                <div class="item-card__actions">
+                    <div class="quantity-wrapper">
+                        <label>Qtd</label>
+                        <input 
+                            type="number" 
+                            class="quantidade-input" 
+                            placeholder="0"
+                            min="0"
+                            step="1"
+                            data-item-id="${item.id}"
+                            data-cod-produto="${item.cod_produto}"
+                            data-tipo="sublocacao"
+                            onblur="handleQuantidadeChange(this, '${item.id}', '${item.cod_produto}')"
+                        >
+                    </div>
+                    <button type="button" class="item-save-btn" data-mode="save" onclick="toggleItemSave(this)">
+                        <i class="material-icons">check</i>
+                        Salvar
+                    </button>
+                </div>
+            `;
+            itensList.appendChild(cardSub);
+            cardIndex++;
+        } else {
+            // Card único para itens sem sub locação
+            const card = document.createElement('div');
+            card.className = 'item-card';
+            card.dataset.itemId = item.id;
+            card.style.animationDelay = `${cardIndex * 0.05}s`;
+            card.innerHTML = `
+                <div class="item-card__info">
+                    <div class="item-card__title">
+                        <span class="item-code">#${item.cod_produto}</span>
+                        <span class="item-desc">${item.desc_produto || '-'} </span>
+                    </div>
+                    <div class="item-card__meta">
+                        <span>Localização: <strong>${item.localizacao || '-'}</strong></span>
+                    </div>
+                </div>
+                <div class="item-card__actions">
+                    <div class="quantity-wrapper">
+                        <label>Qtd</label>
+                        <input 
+                            type="number" 
+                            class="quantidade-input" 
+                            placeholder="0"
+                            min="0"
+                            step="1"
+                            data-item-id="${item.id}"
+                            data-cod-produto="${item.cod_produto}"
+                            data-tipo="locacao"
+                            onblur="handleQuantidadeChange(this, '${item.id}', '${item.cod_produto}')"
+                        >
+                    </div>
+                    <button type="button" class="item-save-btn" data-mode="save" onclick="toggleItemSave(this)">
+                        <i class="material-icons">check</i>
+                        Salvar
+                    </button>
+                </div>
+            `;
+            itensList.appendChild(card);
+            cardIndex++;
+        }
     });
 
     componentHandler.upgradeDom();
@@ -540,12 +619,20 @@ async function conferirEstoque(itemId, codProduto, quantidadeDigitada, input) {
 // FunÃ§Ã£o para enviar log da contagem para a API
 async function enviarLogContagem(itemId, estoque, contado) {
     try {
+        // Somar os valores digitados para locação e sub locação
+        let totalContado = 0;
+        const inputs = document.querySelectorAll(`.quantidade-input[data-item-id='${itemId}']`);
+        inputs.forEach(input => {
+            const val = parseInt(input.value);
+            if (!isNaN(val)) totalContado += val;
+        });
+
         const logData = {
             contagem_id: currentContagem.id,
             usuario_id: currentUser.id,
             item_id: itemId,
             estoque: estoque,
-            contado: contado
+            contado: totalContado
         };
 
         console.log('Enviando log da contagem:', logData);
