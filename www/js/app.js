@@ -29,7 +29,7 @@ window.handleSalvarContagem = async function handleSalvarContagem() {
     showContagensScreen();
 };
 // ConfiguraÃ§Ã£o da API
-const API_BASE_URL = 'http://intranetbackend.acacessorios.local';
+const API_BASE_URL = 'http://estoque-service.acacessorios.local';
 
 // Estado da aplicaÃ§Ã£o
 let currentUser = null;
