@@ -1,4 +1,34 @@
-﻿// ConfiguraÃ§Ã£o da API
+﻿// Função para concluir a contagem (deve ser global)
+window.handleSalvarContagem = async function handleSalvarContagem() {
+    // Verifica se há divergência
+    const cards = document.querySelectorAll('.item-card');
+    let temDivergencia = false;
+    cards.forEach(card => {
+        const input = card.querySelector('.quantidade-input');
+        if (input && input.dataset.temDivergencia === 'true') {
+            temDivergencia = true;
+        }
+    });
+
+    // Envia PUT para liberar contagem sempre, incluindo divergencia no body
+    try {
+        const bodyData = {
+            contagem_cuid: currentContagem.contagem_cuid,
+            contagem: currentContagem.contagem,
+            divergencia: temDivergencia
+        };
+        await makeRequest(`${API_BASE_URL}/estoque/contagem/liberar`, {
+            method: 'PUT',
+            body: JSON.stringify(bodyData)
+        });
+        showToast(temDivergencia ? 'Contagem com divergência liberada!' : 'Contagem finalizada!');
+    } catch (error) {
+        showToast('Erro ao liberar contagem!');
+    }
+    // Volta para a listagem de contagens
+    showContagensScreen();
+};
+// ConfiguraÃ§Ã£o da API
 const API_BASE_URL = 'http://intranetbackend.acacessorios.local';
 
 // Estado da aplicaÃ§Ã£o
@@ -548,7 +578,8 @@ function updateConcluirButtonState() {
 
     const allInputsValid = Array.from(cards).every(card => {
         const input = card.querySelector('.quantidade-input');
-        return input && input.value && input.value.trim() !== '' && input.dataset.temDivergencia !== undefined;
+        // Permite valor 0 como válido
+        return input && input.value !== '' && input.value !== null && input.dataset.temDivergencia !== undefined;
     });
 
     const allSaved = allInputsValid && Array.from(cards).every(card => card.classList.contains('item-card--saved'));
