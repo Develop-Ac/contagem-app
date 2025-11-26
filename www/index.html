@@ -142,5 +142,16 @@
     </div>
 
     <script src="js/app.js"></script>
+    <!-- Modal de Confirmação de Saída -->
+    <div id="confirm-exit-modal" style="display:none;position:fixed;z-index:9999;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
+        <div style="background:#fff;padding:32px 24px;border-radius:8px;max-width:90vw;min-width:280px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,0.2);">
+            <h4>Tem certeza que deseja sair?</h4>
+            <p>Se você atualizar ou sair da página, pode perder dados não salvos.</p>
+            <div style="margin-top:24px;display:flex;gap:16px;justify-content:center;">
+                <button id="confirm-exit-btn" style="background:#d32f2f;color:#fff;padding:8px 20px;border:none;border-radius:4px;cursor:pointer;">Sim, sair</button>
+                <button id="cancel-exit-btn" style="background:#757575;color:#fff;padding:8px 20px;border:none;border-radius:4px;cursor:pointer;">Cancelar</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

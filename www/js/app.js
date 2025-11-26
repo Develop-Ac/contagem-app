@@ -1,4 +1,52 @@
-﻿// Função para concluir a contagem (deve ser global)
+﻿// --- BLOQUEIO DE ATUALIZAÇÃO/SAÍDA COM MODAL CUSTOMIZADO ---
+let allowPageUnload = false;
+const confirmExitModal = document.getElementById('confirm-exit-modal');
+const confirmExitBtn = document.getElementById('confirm-exit-btn');
+const cancelExitBtn = document.getElementById('cancel-exit-btn');
+
+function showConfirmExitModal() {
+    if (confirmExitModal) {
+        confirmExitModal.style.display = 'flex';
+    }
+}
+
+function hideConfirmExitModal() {
+    if (confirmExitModal) {
+        confirmExitModal.style.display = 'none';
+    }
+}
+
+// Intercepta F5, Ctrl+R, Cmd+R e tentativas de fechar/atualizar
+window.addEventListener('keydown', function(e) {
+    // F5 ou Ctrl+R/Cmd+R
+    if ((e.key === 'F5') || (e.key === 'r' && (e.ctrlKey || e.metaKey))) {
+        e.preventDefault();
+        showConfirmExitModal();
+    }
+});
+
+window.addEventListener('beforeunload', function(e) {
+    if (!allowPageUnload) {
+        showConfirmExitModal();
+        e.preventDefault();
+        // Chrome requires returnValue to be set
+        e.returnValue = '';
+        return '';
+    }
+});
+
+if (confirmExitBtn && cancelExitBtn) {
+    confirmExitBtn.onclick = function() {
+        allowPageUnload = true;
+        hideConfirmExitModal();
+        window.location.reload(); // Força atualização
+    };
+    cancelExitBtn.onclick = function() {
+        hideConfirmExitModal();
+    };
+}
+// --- FIM BLOQUEIO DE ATUALIZAÇÃO/SAÍDA ---
+// Função para concluir a contagem (deve ser global)
 window.handleSalvarContagem = async function handleSalvarContagem() {
     // Verifica se há divergência
     const cards = document.querySelectorAll('.item-card');
