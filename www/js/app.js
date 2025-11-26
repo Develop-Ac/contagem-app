@@ -166,7 +166,7 @@ async function handleLogin(event) {
     submitButton.disabled = true;
 
     try {
-        const response = await makeRequest(`${API_BASE_URL}/login`, {
+        const response = await makeRequest(`http://sistema-service.acacessorios.local/login`, {
             method: 'POST',
             body: JSON.stringify({
                 codigo: codigo,
