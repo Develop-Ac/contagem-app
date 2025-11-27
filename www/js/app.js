@@ -17,21 +17,22 @@ function hideConfirmExitModal() {
 }
 
 // Intercepta F5, Ctrl+R, Cmd+R e tentativas de fechar/atualizar
+
+// Sempre mostrar modal customizado para F5/Ctrl+R/Cmd+R
 window.addEventListener('keydown', function(e) {
-    // F5 ou Ctrl+R/Cmd+R
     if ((e.key === 'F5') || (e.key === 'r' && (e.ctrlKey || e.metaKey))) {
         e.preventDefault();
         showConfirmExitModal();
     }
 });
 
+// Sempre mostrar o modal nativo do navegador para qualquer tentativa de sair/atualizar
 window.addEventListener('beforeunload', function(e) {
     if (!allowPageUnload) {
-        showConfirmExitModal();
+        // O navegador só permite modal nativo aqui
         e.preventDefault();
-        // Chrome requires returnValue to be set
-        e.returnValue = '';
-        return '';
+        e.returnValue = 'Tem certeza que deseja sair? Você pode perder dados não salvos.';
+        return 'Tem certeza que deseja sair? Você pode perder dados não salvos.';
     }
 });
 
