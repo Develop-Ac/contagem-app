@@ -638,73 +638,81 @@ function updateConcluirButtonState() {
 // FunÃ§Ã£o para lidar com mudanÃ§a de quantidade
 async function handleQuantidadeChange(input, itemId, codProduto) {
     const quantidade = parseInt(input.value);
-    
     if (isNaN(quantidade) || quantidade < 0) {
         input.value = '';
-        showToast('Quantidade invÃ¡lida');
+        showToast('Quantidade inválida');
         return;
     }
 
-    console.log(`Item ${itemId}: Quantidade alterada para ${quantidade}`);
-    
+    // Verifica se existem dois inputs para o mesmo item (locação e sublocação)
+    const allInputs = document.querySelectorAll(`.quantidade-input[data-item-id='${itemId}']`);
+    let soma = 0;
+    allInputs.forEach(inp => {
+        const val = parseInt(inp.value);
+        if (!isNaN(val)) soma += val;
+    });
+
+    console.log(`Item ${itemId}: Soma das quantidades = ${soma}`);
+
     try {
-        // Conferir o estoque no sistema
-        await conferirEstoque(itemId, codProduto, quantidade, input);
-        
-        // Focar no prÃ³ximo input
+        // Conferir o estoque no sistema usando a soma
+        await conferirEstoqueSoma(itemId, codProduto, soma, allInputs);
+        // Focar no próximo input
         focusNextInput(input);
-        
     } catch (error) {
         console.error('Erro ao conferir estoque:', error);
-        showToast('âŒ Erro ao conferir estoque');
-        input.classList.remove('conferencia-ok', 'conferencia-divergente');
-        input.classList.add('conferencia-erro');
-        setTimeout(() => {
-            input.classList.remove('conferencia-erro');
-        }, 3000);
+        showToast('Erro ao conferir estoque');
+        allInputs.forEach(inp => {
+            inp.classList.remove('conferencia-ok', 'conferencia-divergente');
+            inp.classList.add('conferencia-erro');
+            setTimeout(() => {
+                inp.classList.remove('conferencia-erro');
+            }, 3000);
+        });
     }
 }
 
 // FunÃ§Ã£o para conferir estoque
-async function conferirEstoque(itemId, codProduto, quantidadeDigitada, input) {
+// Nova função para conferir estoque somando locação e sublocação
+async function conferirEstoqueSoma(itemId, codProduto, somaQuantidades, allInputs) {
     try {
         // Fazer GET para conferir estoque
         const response = await makeRequest(`${API_BASE_URL}/estoque/contagem/conferir/${codProduto}?empresa=3`);
-        
         const estoqueReal = response.ESTOQUE;
-        const conferir = quantidadeDigitada !== estoqueReal;
-        
-        // Fazer PUT para atualizar o item
+        console.log(`Produto ${codProduto} - Quantidade em estoque: ${estoqueReal}`);
+
+        // Se a soma for igual ao estoque real, marcar ambos como conferido (conferir: false)
+        const conferir = somaQuantidades !== estoqueReal;
+
+        // Atualizar o item de contagem (apenas 1 chamada, pois é o mesmo ID)
         await makeRequest(`${API_BASE_URL}/estoque/contagem/item/${itemId}`, {
             method: 'PUT',
             body: JSON.stringify({
                 conferir: conferir
             })
         });
-        
+
         // Enviar log da contagem para a API
-        await enviarLogContagem(itemId, estoqueReal, quantidadeDigitada);
-        
-        // Limpar classes anteriores
-        input.classList.remove('conferencia-ok', 'conferencia-divergente', 'conferencia-erro');
-        
-        // Feedback visual baseado na conferÃªncia
-        if (conferir) {
-            // Quantidade diferente - precisa conferir
-            input.classList.add('conferencia-divergente');
-            input.dataset.temDivergencia = 'true';
-        } else {
-            // Quantidade igual - nÃ£o precisa conferir
-            input.classList.add('conferencia-ok');
-            input.dataset.temDivergencia = 'false';
-        }
-        
+        await enviarLogContagem(itemId, estoqueReal, somaQuantidades);
+
+        // Limpar classes anteriores e aplicar feedback visual em todos os inputs
+        allInputs.forEach(inp => {
+            inp.classList.remove('conferencia-ok', 'conferencia-divergente', 'conferencia-erro');
+            if (conferir) {
+                inp.classList.add('conferencia-divergente');
+                inp.dataset.temDivergencia = 'true';
+            } else {
+                inp.classList.add('conferencia-ok');
+                inp.dataset.temDivergencia = 'false';
+            }
+        });
+
         updateConcluirButtonState();
-        
     } catch (error) {
         throw error;
     }
 }
+
 
 // FunÃ§Ã£o para enviar log da contagem para a API
 async function enviarLogContagem(itemId, estoque, contado) {
