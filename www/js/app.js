@@ -79,6 +79,7 @@ window.handleSalvarContagem = async function handleSalvarContagem() {
 };
 // Configuração da API
 const API_BASE_URL = 'http://estoque-service.acacessorios.local';
+// const API_BASE_URL = 'http://localhost:8000'; // Alterar para o endpoint correto da API
 
 // Estado da aplicação
 let currentUser = null;
@@ -507,18 +508,9 @@ function toggleItemSave(button) {
 
         input.disabled = true;
         card.classList.add('item-card--saved');
-        button.dataset.mode = 'edit';
-        button.classList.add('item-edit-btn');
-        button.innerHTML = '<i class="material-icons">edit</i> Alterar';
+        button.disabled = true;
+        button.innerHTML = '<i class="material-icons">check</i> Salvo';
         itensList.appendChild(card);
-    } else {
-        input.disabled = false;
-        card.classList.remove('item-card--saved');
-        button.dataset.mode = 'save';
-        button.classList.remove('item-edit-btn');
-        button.innerHTML = '<i class="material-icons">check</i> Salvar';
-        input.focus();
-        input.select();
     }
 
     updateConcluirButtonState();
