@@ -78,7 +78,8 @@ window.handleSalvarContagem = async function handleSalvarContagem() {
     showContagensScreen();
 };
 // ConfiguraÃ§Ã£o da API
-const API_BASE_URL = 'http://estoque-service.acacessorios.local';
+// const API_BASE_URL = 'http://estoque-service.acacessorios.local';
+const API_BASE_URL = 'http://localhost:8000'; // Alterar para o endpoint correto da API
 
 // Estado da aplicaÃ§Ã£o
 let currentUser = null;
@@ -434,140 +435,53 @@ function renderItens(itens) {
     }
 
     let cardIndex = 0;
-    const cardsLoc = [];
-    const cardsSub = [];
+    const allCards = [];
     itensParaConferir.forEach((item) => {
-        if (item.aplicacoes) {
-            // Card para localização principal
-            const cardLoc = document.createElement('div');
-            cardLoc.className = 'item-card';
-            cardLoc.dataset.itemId = item.id + '_loc';
-            cardLoc.style.animationDelay = `${cardIndex * 0.05}s`;
-            cardLoc.innerHTML = `
-                <div class="item-card__info">
-                    <div class="item-card__title">
-                        <span class="item-code">#${item.cod_produto}</span>
-                        <span class="item-desc">${item.desc_produto || '-'} (Locação)</span>
-                    </div>
-                    <div class="item-card__meta">
-                        <span>Localização: <strong>${item.localizacao || '-'}</strong></span>
-                    </div>
+        // Card único por item
+        const card = document.createElement('div');
+        card.className = 'item-card';
+        card.dataset.itemId = item.id;
+        card.style.animationDelay = `${cardIndex * 0.05}s`;
+        card.innerHTML = `
+            <div class="item-card__info">
+                <div class="item-card__title">
+                    <span class="item-code">#${item.cod_produto}</span>
+                    <span class="item-desc">${item.desc_produto || '-'}</span>
                 </div>
-                <div class="item-card__actions">
-                    <div class="quantity-wrapper">
-                        <label>Qtd</label>
-                        <input 
-                            type="number" 
-                            class="quantidade-input" 
-                            placeholder="0"
-                            min="0"
-                            step="1"
-                            data-item-id="${item.id}"
-                            data-cod-produto="${item.cod_produto}"
-                            data-tipo="locacao"
-                            onblur="handleQuantidadeChange(this, '${item.id}', '${item.cod_produto}')"
-                        >
-                    </div>
-                    <button type="button" class="item-save-btn" data-mode="save" onclick="toggleItemSave(this)">
-                        <i class="material-icons">check</i>
-                        Salvar
-                    </button>
+                <div class="item-card__meta">
+                    <span>Localização: <strong>${item.localizacao || '-'}</strong></span>
                 </div>
-            `;
-            cardsLoc.push({
-                el: cardLoc,
-                sortVal: (item.localizacao || '')
-            });
-            cardIndex++;
-
-            // Card para sub locação
-            const cardSub = document.createElement('div');
-            cardSub.className = 'item-card';
-            cardSub.dataset.itemId = item.id + '_sub';
-            cardSub.style.animationDelay = `${cardIndex * 0.05}s`;
-            cardSub.innerHTML = `
-                <div class="item-card__info">
-                    <div class="item-card__title">
-                        <span class="item-code">#${item.cod_produto}</span>
-                        <span class="item-desc">${item.desc_produto || '-'} (Sub Locação)</span>
-                    </div>
-                    <div class="item-card__meta">
-                        <span>Sub Locação: <strong>${item.aplicacoes}</strong></span>
-                    </div>
+            </div>
+            <div class="item-card__actions">
+                <div class="quantity-wrapper">
+                    <label>Qtd</label>
+                    <input 
+                        type="number" 
+                        class="quantidade-input" 
+                        placeholder="0"
+                        min="0"
+                        step="1"
+                        data-item-id="${item.id}"
+                        data-cod-produto="${item.cod_produto}"
+                        data-tipo="locacao"
+                        data-identificador-item="${item.identificador_item}"
+                        onblur="handleQuantidadeChange(this, '${item.id}', '${item.cod_produto}')"
+                    >
                 </div>
-                <div class="item-card__actions">
-                    <div class="quantity-wrapper">
-                        <label>Qtd</label>
-                        <input 
-                            type="number" 
-                            class="quantidade-input" 
-                            placeholder="0"
-                            min="0"
-                            step="1"
-                            data-item-id="${item.id}"
-                            data-cod-produto="${item.cod_produto}"
-                            data-tipo="sublocacao"
-                            onblur="handleQuantidadeChange(this, '${item.id}', '${item.cod_produto}')"
-                        >
-                    </div>
-                    <button type="button" class="item-save-btn" data-mode="save" onclick="toggleItemSave(this)">
-                        <i class="material-icons">check</i>
-                        Salvar
-                    </button>
-                </div>
-            `;
-            cardsSub.push({
-                el: cardSub,
-                sortVal: (item.aplicacoes || '')
-            });
-            cardIndex++;
-        } else {
-            // Card único para itens sem sub locação
-            const card = document.createElement('div');
-            card.className = 'item-card';
-            card.dataset.itemId = item.id;
-            card.style.animationDelay = `${cardIndex * 0.05}s`;
-            card.innerHTML = `
-                <div class="item-card__info">
-                    <div class="item-card__title">
-                        <span class="item-code">#${item.cod_produto}</span>
-                        <span class="item-desc">${item.desc_produto || '-'} </span>
-                    </div>
-                    <div class="item-card__meta">
-                        <span>Localização: <strong>${item.localizacao || '-'}</strong></span>
-                    </div>
-                </div>
-                <div class="item-card__actions">
-                    <div class="quantity-wrapper">
-                        <label>Qtd</label>
-                        <input 
-                            type="number" 
-                            class="quantidade-input" 
-                            placeholder="0"
-                            min="0"
-                            step="1"
-                            data-item-id="${item.id}"
-                            data-cod-produto="${item.cod_produto}"
-                            data-tipo="locacao"
-                            onblur="handleQuantidadeChange(this, '${item.id}', '${item.cod_produto}')"
-                        >
-                    </div>
-                    <button type="button" class="item-save-btn" data-mode="save" onclick="toggleItemSave(this)">
-                        <i class="material-icons">check</i>
-                        Salvar
-                    </button>
-                </div>
-            `;
-            cardsLoc.push({
-                el: card,
-                sortVal: (item.localizacao || '')
-            });
-            cardIndex++;
-        }
+                <button type="button" class="item-save-btn" data-mode="save" onclick="toggleItemSave(this)">
+                    <i class="material-icons">check</i>
+                    Salvar
+                </button>
+            </div>
+        `;
+        allCards.push({
+            el: card,
+            sortVal: (item.localizacao || '')
+        });
+        cardIndex++;
     });
 
-    // Junta todos os cards e ordena em ordem crescente
-    const allCards = [...cardsLoc, ...cardsSub];
+    // Ordena os cards em ordem crescente
     allCards.sort((a, b) => a.sortVal.localeCompare(b.sortVal, undefined, { numeric: true, sensitivity: 'base' }));
     allCards.forEach(cardObj => {
         itensList.appendChild(cardObj.el);
@@ -720,10 +634,15 @@ async function enviarLogContagem(itemId, estoque, contado) {
     try {
         // Somar os valores digitados para locação e sub locação
         let totalContado = 0;
+        let identificadorItem = null;
         const inputs = document.querySelectorAll(`.quantidade-input[data-item-id='${itemId}']`);
         inputs.forEach(input => {
             const val = parseInt(input.value);
             if (!isNaN(val)) totalContado += val;
+            // Capturar identificador_item do primeiro input (será o mesmo para todos os inputs do mesmo item)
+            if (!identificadorItem && input.dataset.identificadorItem) {
+                identificadorItem = input.dataset.identificadorItem;
+            }
         });
 
         const logData = {
@@ -731,7 +650,8 @@ async function enviarLogContagem(itemId, estoque, contado) {
             usuario_id: currentUser.id,
             item_id: itemId,
             estoque: estoque,
-            contado: totalContado
+            contado: totalContado,
+            identificador_item: identificadorItem
         };
 
         console.log('Enviando log da contagem:', logData);
