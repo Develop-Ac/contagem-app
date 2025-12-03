@@ -77,11 +77,10 @@ window.handleSalvarContagem = async function handleSalvarContagem() {
     // Volta para a listagem de contagens
     showContagensScreen();
 };
-// ConfiguraÃ§Ã£o da API
-// const API_BASE_URL = 'http://estoque-service.acacessorios.local';
-const API_BASE_URL = 'http://localhost:8000'; // Alterar para o endpoint correto da API
+// Configuração da API
+const API_BASE_URL = 'http://estoque-service.acacessorios.local';
 
-// Estado da aplicaÃ§Ã£o
+// Estado da aplicação
 let currentUser = null;
 let currentContagem = null;
 
