@@ -590,11 +590,26 @@ async function conferirEstoqueSoma(itemId, codProduto, somaQuantidades, allInput
         // Se a soma for igual ao estoque real, marcar ambos como conferido (conferir: false)
         const conferir = somaQuantidades !== estoqueReal;
 
+        console.log(`Produto ${codProduto} - Conferir: ${conferir} (Estoque: ${estoqueReal}, Contado: ${somaQuantidades}) {itemId: ${itemId}}`);
+
         // Atualizar o item de contagem (apenas 1 chamada, pois é o mesmo ID)
-        await makeRequest(`${API_BASE_URL}/estoque/contagem/item/${itemId}`, {
+        // Buscar o identificador_item do item atual
+        let identificadorItem = null;
+        if (currentContagem && Array.isArray(currentContagem.itens)) {
+            const itemObj = currentContagem.itens.find(it => it.id === itemId);
+            if (itemObj && itemObj.identificador_item) {
+            identificadorItem = itemObj.identificador_item;
+            }
+        }
+        if (!identificadorItem) {
+            throw new Error('identificador_item não encontrado para o item');
+        }
+
+        await makeRequest(`${API_BASE_URL}/estoque/contagem/item/${identificadorItem}`, {
             method: 'PUT',
             body: JSON.stringify({
-                conferir: conferir
+            conferir: conferir,
+            itemId: itemId
             })
         });
 
