@@ -530,15 +530,10 @@ function updateConcluirButtonState() {
         return;
     }
 
-    const allInputsValid = Array.from(cards).every(card => {
-        const input = card.querySelector('.quantidade-input');
-        // Permite valor 0 como válido
-        return input && input.value !== '' && input.value !== null && input.dataset.temDivergencia !== undefined;
-    });
+    // Verifica se há pelo menos um item salvo (permite conclusão mesmo com itens sobrando)
+    const hasSavedItems = Array.from(cards).some(card => card.classList.contains('item-card--saved'));
 
-    const allSaved = allInputsValid && Array.from(cards).every(card => card.classList.contains('item-card--saved'));
-
-    salvarBtn.disabled = !allSaved;
+    salvarBtn.disabled = !hasSavedItems;
 }
 
 // FunÃ§Ã£o para lidar com mudanÃ§a de quantidade
