@@ -19,7 +19,7 @@ function hideConfirmExitModal() {
 // Intercepta F5, Ctrl+R, Cmd+R e tentativas de fechar/atualizar
 
 // Sempre mostrar modal customizado para F5/Ctrl+R/Cmd+R
-window.addEventListener('keydown', function(e) {
+window.addEventListener('keydown', function (e) {
     if ((e.key === 'F5') || (e.key === 'r' && (e.ctrlKey || e.metaKey))) {
         e.preventDefault();
         showConfirmExitModal();
@@ -27,7 +27,7 @@ window.addEventListener('keydown', function(e) {
 });
 
 // Sempre mostrar o modal nativo do navegador para qualquer tentativa de sair/atualizar
-window.addEventListener('beforeunload', function(e) {
+window.addEventListener('beforeunload', function (e) {
     if (!allowPageUnload) {
         // O navegador só permite modal nativo aqui
         e.preventDefault();
@@ -37,12 +37,12 @@ window.addEventListener('beforeunload', function(e) {
 });
 
 if (confirmExitBtn && cancelExitBtn) {
-    confirmExitBtn.onclick = function() {
+    confirmExitBtn.onclick = function () {
         allowPageUnload = true;
         hideConfirmExitModal();
         window.location.reload(); // Força atualização
     };
-    cancelExitBtn.onclick = function() {
+    cancelExitBtn.onclick = function () {
         hideConfirmExitModal();
     };
 }
@@ -78,8 +78,14 @@ window.handleSalvarContagem = async function handleSalvarContagem() {
     showContagensScreen();
 };
 // Configuração da API
-const API_BASE_URL = 'http://estoque-service.acacessorios.local';
-// const API_BASE_URL = 'http://localhost:8000'; // Alterar para o endpoint correto da API
+// Configuração da API
+const hostname = window.location.hostname;
+const isLocalDev = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.') || hostname.startsWith('10.');
+
+// Se for dev/local, usa o MESMO IP na porta 8000. Se não, usa prod.
+const API_BASE_URL = isLocalDev
+    ? `http://${hostname}:8000`
+    : 'http://estoque-service.acacessorios.local';
 
 // Estado da aplicação
 let currentUser = null;
@@ -103,7 +109,7 @@ const salvarBtn = document.getElementById('salvar-btn');
 const toast = document.getElementById('toast');
 
 // InicializaÃ§Ã£o
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Ajusta estado inicial da classe do body baseada na tela ativa
     document.body.classList.toggle('login-screen-active', loginScreen.classList.contains('active'));
 
@@ -118,7 +124,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loginForm.addEventListener('submit', handleLogin);
     backBtn.addEventListener('click', () => showContagensScreen());
     logoutBtn.addEventListener('click', handleLogout);
-    
+
     // Debug: verificar se o botÃ£o salvar existe
     if (salvarBtn) {
         console.log('âœ… BotÃ£o salvar encontrado, adicionando event listener');
@@ -128,36 +134,36 @@ document.addEventListener('DOMContentLoaded', function() {
             disabled: salvarBtn.disabled,
             innerHTML: salvarBtn.innerHTML
         });
-        
+
         // Remover qualquer listener anterior
         salvarBtn.removeEventListener('click', handleSalvarContagem);
-        
+
         // Usar onclick diretamente 
-        salvarBtn.onclick = function(event) {
+        salvarBtn.onclick = function (event) {
             console.log('ðŸ–±ï¸ BOTÃƒO SALVAR CLICADO!!! Event:', event);
             console.log('ðŸ“ Estado do botÃ£o no click:', {
                 display: salvarBtn.style.display,
                 disabled: salvarBtn.disabled,
                 innerHTML: salvarBtn.innerHTML
             });
-            
+
             event.preventDefault();
             event.stopPropagation();
-            
+
             handleSalvarContagem();
             return false;
         };
-        
+
         // Adicionar tambÃ©m via addEventListener como backup
         salvarBtn.addEventListener('click', (event) => {
             console.log('ðŸ–±ï¸ BACKUP EVENT LISTENER ATIVADO!');
         }, true); // useCapture = true
-        
+
         // Adicionar tambÃ©m um listener de mousedown para debug
         salvarBtn.addEventListener('mousedown', () => {
             console.log('ðŸ–±ï¸ MOUSEDOWN no botÃ£o salvar');
         });
-        
+
     } else {
         console.log('âŒ BotÃ£o salvar NÃƒO encontrado!');
     }
@@ -188,7 +194,9 @@ async function makeRequest(url, options = {}) {
         });
 
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorData = await response.json().catch(() => ({}));
+            const errorMessage = errorData.message || errorData.error || `HTTP error! status: ${response.status}`;
+            throw new Error(errorMessage);
         }
 
         return await response.json();
@@ -216,7 +224,7 @@ async function handleLogin(event) {
     submitButton.disabled = true;
 
     try {
-        const response = await makeRequest(`http://sistema-service.acacessorios.local/login`, {
+        const response = await makeRequest(`${API_BASE_URL}/login`, {
             method: 'POST',
             body: JSON.stringify({
                 codigo: codigo,
@@ -253,13 +261,13 @@ function handleLogout() {
     localStorage.removeItem('currentUser');
     currentUser = null;
     currentContagem = null;
-    
+
     // Limpar formulÃ¡rio
     loginForm.reset();
-    
+
     // Mostrar tela de login
     showScreen('login-screen');
-    
+
     showToast('Logout realizado com sucesso');
 }
 
@@ -275,7 +283,7 @@ function showScreen(screenId) {
 // FunÃ§Ã£o para mostrar tela de contagens
 async function showContagensScreen() {
     showScreen('contagens-screen');
-    
+
     // Mostrar nome do usuÃ¡rio
     if (currentUser) {
         userNameSpan.textContent = `Olá, ${currentUser.nome}`;
@@ -294,7 +302,7 @@ async function loadContagens() {
 
     try {
         const response = await makeRequest(`${API_BASE_URL}/estoque/contagem/${currentUser.id}`);
-        
+
         if (Array.isArray(response)) {
             renderContagens(response);
         } else {
@@ -302,7 +310,7 @@ async function loadContagens() {
         }
     } catch (error) {
         console.error('Erro ao carregar contagens:', error);
-        showToast('Erro de conexÃ£o ao carregar contagens');
+        showToast(`Erro: ${error.message}`);
     } finally {
         contagensLoading.style.display = 'none';
     }
@@ -312,13 +320,13 @@ async function loadContagens() {
 function renderContagens(contagens) {
     // Filtrar apenas contagens liberadas
     const contagensLiberadas = contagens.filter(contagem => contagem.liberado_contagem === true);
-    
+
     if (contagensLiberadas.length === 0) {
         contagensGrid.innerHTML = `
             <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #666;">
                 <i class="material-icons" style="font-size: 48px; margin-bottom: 16px; color: #bbb;">inbox</i>
                 <h4 style="color: #333; margin-bottom: 8px;">Nenhuma contagem liberada encontrada</h4>
-                <p style="color: #666;">NÃ£o hÃ¡ contagens liberadas para vocÃª no momento.</p>
+                <p style="color: #666;">Não há contagens liberadas para você no momento.</p>
             </div>
         `;
         return;
@@ -336,7 +344,7 @@ function renderContagens(contagens) {
         const card = document.createElement('div');
         card.className = 'mdl-card mdl-shadow--2dp contagem-card';
         card.style.animationDelay = `${index * 0.1}s`;
-        
+
         card.innerHTML = `
             <div class="mdl-card__title">
                 <h2 class="mdl-card__title-text">Contagem #${contagem.contagem}</h2>
@@ -372,16 +380,16 @@ async function showItensScreen() {
     if (!currentContagem) return;
 
     showScreen('itens-screen');
-    
+
     // Resetar estados
     salvarBtn.style.display = 'inline-flex';
     salvarBtn.disabled = true;
     salvarBtn.innerHTML = '<i class="material-icons" style="margin-right: 8px;">save</i>Concluir Contagem';
-    
+
     // Mostrar informaÃ§Ãµes da contagem
     const itensParaConferir = currentContagem.itens ? currentContagem.itens.filter(item => item.conferir === true) : [];
     const totalItens = currentContagem.itens ? currentContagem.itens.length : 0;
-    
+
     contagemHeading.textContent = `Contagem #${currentContagem.contagem} | ${itensParaConferir.length} de ${totalItens} itens para conferir`;
 
     // Carregar itens
@@ -465,6 +473,7 @@ function renderItens(itens) {
                         data-cod-produto="${item.cod_produto}"
                         data-tipo="locacao"
                         data-identificador-item="${item.identificador_item}"
+                        data-tem-aplicacao="${item.tem_aplicacao || false}"
                         onblur="handleQuantidadeChange(this, '${item.id}', '${item.cod_produto}')"
                     >
                 </div>
@@ -545,25 +554,30 @@ async function handleQuantidadeChange(input, itemId, codProduto) {
         return;
     }
 
-    // Verifica se existem dois inputs para o mesmo item (locação e sublocação)
-    const allInputs = document.querySelectorAll(`.quantidade-input[data-item-id='${itemId}']`);
+    // Verifica se existem inputs de OUTROS cartões que sejam do mesmo PRODUTO (mesmo codProduto)
+    // para somar tudo.
+    const allInputs = document.querySelectorAll(`.quantidade-input`);
     let soma = 0;
-    allInputs.forEach(inp => {
+
+    // Filtra inputs que tenham o mesmo data-cod-produto
+    const inputsDoProduto = Array.from(allInputs).filter(inp => inp.dataset.codProduto === String(codProduto));
+
+    inputsDoProduto.forEach(inp => {
         const val = parseInt(inp.value);
         if (!isNaN(val)) soma += val;
     });
 
-    console.log(`Item ${itemId}: Soma das quantidades = ${soma}`);
+    console.log(`Item ${itemId} (Cod ${codProduto}): Soma TOTAL das quantidades = ${soma}`);
 
     try {
-        // Conferir o estoque no sistema usando a soma
-        await conferirEstoqueSoma(itemId, codProduto, soma, allInputs);
+        // Conferir o estoque no sistema usando a soma TOTAL
+        await conferirEstoqueSoma(itemId, codProduto, soma, inputsDoProduto);
         // Focar no próximo input
         focusNextInput(input);
     } catch (error) {
         console.error('Erro ao conferir estoque:', error);
         showToast('Erro ao conferir estoque');
-        allInputs.forEach(inp => {
+        inputsDoProduto.forEach(inp => {
             inp.classList.remove('conferencia-ok', 'conferencia-divergente');
             inp.classList.add('conferencia-erro');
             setTimeout(() => {
@@ -583,9 +597,26 @@ async function conferirEstoqueSoma(itemId, codProduto, somaQuantidades, allInput
         console.log(`Produto ${codProduto} - Quantidade em estoque: ${estoqueReal}`);
 
         // Se a soma for igual ao estoque real, marcar ambos como conferido (conferir: false)
-        const conferir = somaQuantidades !== estoqueReal;
+        let conferir = somaQuantidades !== estoqueReal;
 
-        console.log(`Produto ${codProduto} - Conferir: ${conferir} (Estoque: ${estoqueReal}, Contado: ${somaQuantidades}) {itemId: ${itemId}}`);
+        // LÓGICA DE APLICAÇÃO:
+        // Se o produto tem aplicação, a primeira contagem não deve gerar divergência imediata (stay pending).
+        // Assumimos que o backend fará a soma com a segunda contagem.
+        // Portanto, enviamos conferir = false para indicar que "esta" contagem foi concluída pelo usuário.
+        // Se houver divergência na soma total, o backend deverá reabrir o item.
+        const input = document.querySelector(`.quantidade-input[data-item-id='${itemId}']`);
+        const temAplicacao = input && input.dataset.temAplicacao === 'true';
+
+        console.log(`Produto ${codProduto} - Tem Aplicação: ${temAplicacao}`);
+
+        if (temAplicacao) {
+            console.log(`Produto ${codProduto} - Item com aplicação: Marcando como conferido (conferir: false) para aguardar segunda contagem.`);
+            conferir = false;
+            // Nota: Se a soma for realmente divergente após os dois contarem, 
+            // o backend deve ser responsável por setar conferir = true novamente.
+        }
+
+        console.log(`Produto ${codProduto} - Conferir final: ${conferir} (Estoque: ${estoqueReal}, Contado: ${somaQuantidades}) {itemId: ${itemId}}`);
 
         // Atualizar o item de contagem (apenas 1 chamada, pois é o mesmo ID)
         // Buscar o identificador_item do item atual
@@ -593,33 +624,43 @@ async function conferirEstoqueSoma(itemId, codProduto, somaQuantidades, allInput
         if (currentContagem && Array.isArray(currentContagem.itens)) {
             const itemObj = currentContagem.itens.find(it => it.id === itemId);
             if (itemObj && itemObj.identificador_item) {
-            identificadorItem = itemObj.identificador_item;
+                identificadorItem = itemObj.identificador_item;
             }
         }
         if (!identificadorItem) {
             throw new Error('identificador_item não encontrado para o item');
         }
 
+        // MOVIDO PARA ANTES DO UPDATE: Enviar log da contagem PRÉVIAMENTE
+        // Isso garante que o backend tenha o valor contado mais recente ao calcular a divergência.
+        // O Log deve ser enviado para o ITEM específico que foi digitado (itemId).
+        // OBS: Enviamos a soma parcial deste item, não a soma total do produto (o backend que some se quiser, ou usamos logs individuais).
+        // A função enviarLogContagem pega o valor do input do itemId.
+        await enviarLogContagem(itemId, estoqueReal);
+
         await makeRequest(`${API_BASE_URL}/estoque/contagem/item/${identificadorItem}`, {
             method: 'PUT',
             body: JSON.stringify({
-            conferir: conferir,
-            itemId: itemId
+                conferir: conferir,
+                itemId: itemId
             })
         });
 
-        // Enviar log da contagem para a API
-        await enviarLogContagem(itemId, estoqueReal, somaQuantidades);
-
         // Limpar classes anteriores e aplicar feedback visual em todos os inputs
         allInputs.forEach(inp => {
-            inp.classList.remove('conferencia-ok', 'conferencia-divergente', 'conferencia-erro');
+            inp.classList.remove('conferencia-ok', 'conferencia-divergente', 'conferencia-erro', 'conferencia-pendente');
             if (conferir) {
                 inp.classList.add('conferencia-divergente');
                 inp.dataset.temDivergencia = 'true';
             } else {
-                inp.classList.add('conferencia-ok');
-                inp.dataset.temDivergencia = 'false';
+                if (temAplicacao && somaQuantidades !== estoqueReal) {
+                    // Visualmente indicamos que está pendente/parcial, mas salvo
+                    inp.classList.add('conferencia-pendente');
+                    inp.dataset.temDivergencia = 'false'; // Não bloqueia a saída
+                } else {
+                    inp.classList.add('conferencia-ok');
+                    inp.dataset.temDivergencia = 'false';
+                }
             }
         });
 
@@ -631,7 +672,8 @@ async function conferirEstoqueSoma(itemId, codProduto, somaQuantidades, allInput
 
 
 // FunÃ§Ã£o para enviar log da contagem para a API
-async function enviarLogContagem(itemId, estoque, contado) {
+// Removido argumento 'contado' pois vamos ler do input diretamente para ser atomicamente correto com a UI
+async function enviarLogContagem(itemId, estoque) {
     try {
         // Somar os valores digitados para locação e sub locação
         let totalContado = 0;
@@ -647,7 +689,7 @@ async function enviarLogContagem(itemId, estoque, contado) {
         });
 
         const logData = {
-            contagem_id: currentContagem.id,
+            contagem_id: currentContagem.id, // ID específico da contagem (ex: clx...type1)
             usuario_id: currentUser.id,
             item_id: itemId,
             estoque: estoque,
@@ -674,7 +716,7 @@ async function enviarLogContagem(itemId, estoque, contado) {
 function focusNextInput(currentInput) {
     const allInputs = document.querySelectorAll('.quantidade-input');
     const currentIndex = Array.from(allInputs).indexOf(currentInput);
-    
+
     if (currentIndex >= 0 && currentIndex < allInputs.length - 1) {
         let nextIndex = currentIndex + 1;
         while (nextIndex < allInputs.length && allInputs[nextIndex].disabled) {
@@ -703,7 +745,7 @@ function salvarQuantidades() {
     });
 
     console.log('Quantidades a salvar:', quantidades);
-    
+
     // Aqui vocÃª implementaria a requisiÃ§Ã£o para salvar no backend
     showToast(`${quantidades.length} quantidades salvas com sucesso!`);
 }
@@ -724,7 +766,7 @@ function formatarData(dataString) {
 function filtrarItens(texto) {
     if (!itensList) return;
     const cards = itensList.querySelectorAll('.item-card');
-    
+
     cards.forEach(card => {
         const textoCard = card.textContent.toLowerCase();
         const mostrar = textoCard.includes(texto.toLowerCase());
@@ -740,7 +782,7 @@ document.addEventListener('keydown', (event) => {
             showContagensScreen();
         }
     }
-    
+
     // Enter para fazer login se estiver na tela de login
     if (event.key === 'Enter' && loginScreen.classList.contains('active')) {
         handleLogin(event);
@@ -755,10 +797,10 @@ function adicionarPesquisa() {
         <input class="mdl-textfield__input" type="text" id="search-input" onkeyup="filtrarItens(this.value)">
         <label class="mdl-textfield__label" for="search-input">Pesquisar itens...</label>
     `;
-    
+
     const tableContainer = document.getElementById('itens-table-container');
     tableContainer.parentNode.insertBefore(searchInput, tableContainer);
-    
+
     // Upgrade MDL
     componentHandler.upgradeDom();
 }
@@ -766,12 +808,12 @@ function adicionarPesquisa() {
 // FunÃ§Ã£o para exportar dados (exemplo)
 function exportarDados() {
     if (!currentContagem) return;
-    
+
     const dados = {
         contagem: currentContagem,
         quantidades: []
     };
-    
+
     const inputs = document.querySelectorAll('.quantidade-input');
     inputs.forEach(input => {
         if (input.value) {
@@ -781,18 +823,18 @@ function exportarDados() {
             });
         }
     });
-    
+
     const dataStr = JSON.stringify(dados, null, 2);
-    const dataBlob = new Blob([dataStr], {type: 'application/json'});
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
-    
+
     const link = document.createElement('a');
     link.href = url;
     link.download = `contagem_${currentContagem.contagem}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     showToast('Dados exportados com sucesso!');
 }
 

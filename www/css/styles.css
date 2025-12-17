@@ -10,13 +10,18 @@
 
     /* Cores Neutras (Paleta de Apoio) */
     --white: #ffffff;
-    --grey-50: #f8f9fa;  /* Fundo do body */
+    --grey-50: #f8f9fa;
+    /* Fundo do body */
     --grey-100: #f1f3f5;
-    --grey-200: #e9ecef; /* Bordas suaves */
+    --grey-200: #e9ecef;
+    /* Bordas suaves */
     --grey-300: #dee2e6;
-    --grey-500: #868e96; /* Texto secundário */
-    --grey-700: #495057; /* Texto principal */
-    --grey-900: #212529; /* Títulos */
+    --grey-500: #868e96;
+    /* Texto secundário */
+    --grey-700: #495057;
+    /* Texto principal */
+    --grey-900: #212529;
+    /* Títulos */
 
     /* Cores de Feedback (Usabilidade) */
     --success-color: #4caf50;
@@ -25,7 +30,7 @@
     --warning-light: #fff3e0;
     --error-color: #f44336;
     --error-light: #ffebee;
-    
+
     /* Foco Acessível (Usabilidade) */
     --focus-ring: 0 0 0 3px rgba(48, 103, 197, 0.4);
 
@@ -51,7 +56,7 @@
 body {
     font-family: var(--base-font);
     /* Fundo levemente acinzentado para destacar os cards brancos */
-    background: var(--grey-50); 
+    background: var(--grey-50);
     min-height: 100vh;
     color: var(--grey-700);
 }
@@ -323,7 +328,7 @@ body {
 }
 
 .login-button:focus-visible {
-     box-shadow: var(--focus-ring), 0 10px 26px rgba(48, 103, 197, 0.35);
+    box-shadow: var(--focus-ring), 0 10px 26px rgba(48, 103, 197, 0.35);
 }
 
 .login-button:disabled {
@@ -363,23 +368,28 @@ body {
     align-items: center;
     justify-content: space-between;
     margin-bottom: 24px;
-    padding-bottom: 16px; /* Adicionado padding inferior */
-    border-bottom: 1px solid var(--grey-200); /* Separador visual */
+    padding-bottom: 16px;
+    /* Adicionado padding inferior */
+    border-bottom: 1px solid var(--grey-200);
+    /* Separador visual */
 }
 
 .page-title {
     display: flex;
     align-items: center;
     gap: 12px;
-    color: var(--grey-900); /* Cor mais escura para hierarquia */
+    color: var(--grey-900);
+    /* Cor mais escura para hierarquia */
     font-weight: 500;
-    font-size: 24px; /* Tamanho consistente */
+    font-size: 24px;
+    /* Tamanho consistente */
     margin: 0;
 }
 
 .page-title .material-icons {
     font-size: 32px;
-    color: var(--primary-color); /* Ícone com a cor primária */
+    color: var(--primary-color);
+    /* Ícone com a cor primária */
 }
 
 .contagem-info-card {
@@ -387,8 +397,10 @@ body {
     margin-bottom: 24px;
     border-radius: var(--border-radius-md);
     background: var(--white);
-    border: 1px solid var(--grey-200); /* Borda mais suave */
-    box-shadow: var(--shadow-sm); /* Sombra mais sutil */
+    border: 1px solid var(--grey-200);
+    /* Borda mais suave */
+    box-shadow: var(--shadow-sm);
+    /* Sombra mais sutil */
 }
 
 .contagem-info-card .mdl-card__supporting-text {
@@ -434,9 +446,11 @@ body {
 }
 
 .contagem-card:hover {
-    transform: translateY(-4px); /* Efeito de "lift" maior */
+    transform: translateY(-4px);
+    /* Efeito de "lift" maior */
     box-shadow: var(--shadow-lg);
-    border-color: var(--primary-color); /* Destaca com cor primária no hover */
+    border-color: var(--primary-color);
+    /* Destaca com cor primária no hover */
 }
 
 .contagem-card:focus-visible {
@@ -450,10 +464,13 @@ body {
  * Um título limpo melhora a escaneabilidade.
  */
 .contagem-card .mdl-card__title {
-    background: none; /* REMOVIDO o gradiente daqui */
-    color: var(--grey-900); /* Título escuro */
+    background: none;
+    /* REMOVIDO o gradiente daqui */
+    color: var(--grey-900);
+    /* Título escuro */
     padding: 20px;
-    border-bottom: 1px solid var(--grey-100); /* Separador interno */
+    border-bottom: 1px solid var(--grey-100);
+    /* Separador interno */
 }
 
 .contagem-card .mdl-card__title-text {
@@ -467,15 +484,18 @@ body {
 
 .contagem-info {
     margin-bottom: 8px;
-    font-size: 15px; /* Tamanho de texto base */
+    font-size: 15px;
+    /* Tamanho de texto base */
 }
 
 .contagem-info strong {
-    color: var(--primary-color); /* Mantém o destaque azul */
+    color: var(--primary-color);
+    /* Mantém o destaque azul */
 }
 
 .contagem-date {
-    color: var(--grey-500); /* Cor secundária para data */
+    color: var(--grey-500);
+    /* Cor secundária para data */
     font-size: 14px;
 }
 
@@ -486,10 +506,12 @@ body {
     background: var(--white);
     border: 1px solid var(--grey-200);
     border-radius: var(--border-radius-md);
-    overflow: hidden; /* Garante que o radius funcione */
+    overflow: hidden;
+    /* Garante que o radius funcione */
     margin-top: 20px;
     box-shadow: var(--shadow-sm);
-    overflow-x: auto; /* Adicionado para responsividade */
+    overflow-x: auto;
+    /* Adicionado para responsividade */
     max-height: calc(100vh - 360px);
     overflow-y: auto;
 }
@@ -666,7 +688,8 @@ body {
 
 .itens-table {
     width: 100%;
-    border-collapse: collapse; /* Bordas mais limpas */
+    border-collapse: collapse;
+    /* Bordas mais limpas */
     background: transparent;
 }
 
@@ -682,16 +705,19 @@ body {
     font-weight: 500;
     padding: 16px 12px;
     border: none;
-    text-align: left; /* Alinhamento padrão */
+    text-align: left;
+    /* Alinhamento padrão */
 }
 
 .itens-table tbody tr {
-    border-bottom: 1px solid var(--grey-200); /* Borda mais suave */
+    border-bottom: 1px solid var(--grey-200);
+    /* Borda mais suave */
     transition: background-color 0.2s ease;
 }
 
 .itens-table tbody tr:last-child {
-    border-bottom: none; /* Remove borda do último item */
+    border-bottom: none;
+    /* Remove borda do último item */
 }
 
 .itens-table tbody tr:hover {
@@ -716,7 +742,8 @@ body {
 
 .produto-nome {
     font-weight: 500;
-    color: var(--grey-900); /* Destaque para o nome */
+    color: var(--grey-900);
+    /* Destaque para o nome */
     margin-bottom: 0;
 }
 
@@ -731,7 +758,8 @@ body {
  */
 .localizacao-badge {
     background: var(--secondary-color);
-    color: var(--grey-900); /* Texto escuro é mais legível no verde-limão */
+    color: var(--grey-900);
+    /* Texto escuro é mais legível no verde-limão */
     padding: 6px 12px;
     border-radius: 20px;
     font-size: 12px;
@@ -807,7 +835,8 @@ body {
 
 .mdl-textfield.is-focused .mdl-textfield__input {
     border-bottom-color: var(--primary-color);
-    box-shadow: none; /* Remove shadow do focus padrão do MDL */
+    box-shadow: none;
+    /* Remove shadow do focus padrão do MDL */
 }
 
 .mdl-textfield__label {
@@ -860,6 +889,13 @@ body {
     color: var(--error-color);
 }
 
+.quantidade-input.conferencia-pendente {
+    border-color: var(--primary-color);
+    background-color: rgba(48, 103, 197, 0.1);
+    /* blue light */
+    color: var(--primary-color);
+}
+
 .error-message {
     color: var(--error-color);
     font-size: 14px;
@@ -890,6 +926,7 @@ body {
 .mdl-layout__header .mdl-button--icon {
     color: var(--white);
 }
+
 .mdl-layout__header .mdl-button--icon:hover {
     background-color: rgba(255, 255, 255, 0.1);
 }
@@ -912,7 +949,8 @@ body {
 }
 
 .mdl-snackbar {
-    background: var(--grey-900); /* Cor escura padrão */
+    background: var(--grey-900);
+    /* Cor escura padrão */
     border-radius: var(--border-radius-sm);
     box-shadow: var(--shadow-lg);
 }
@@ -925,6 +963,7 @@ body {
         opacity: 0;
         transform: translateY(30px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -936,6 +975,7 @@ body {
         opacity: 0;
         transform: translateY(20px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -953,19 +993,21 @@ body {
     .screen {
         padding: 16px;
     }
-    
+
     .page-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 16px;
     }
-    
+
     .contagens-grid {
-        grid-template-columns: 1fr; /* Coluna única */
+        grid-template-columns: 1fr;
+        /* Coluna única */
         gap: 16px;
         display: flex;
         flex-direction: column;
-        margin: 0 -8px; /* ocupa toda a largura visual */
+        margin: 0 -8px;
+        /* ocupa toda a largura visual */
     }
 
     .contagem-card {
@@ -973,66 +1015,68 @@ body {
         border-radius: var(--border-radius-md);
         min-height: 200px;
     }
-    
+
     #itens-screen .content-container {
         height: auto;
     }
-    
+
     .table-container {
         max-height: none;
     }
-    
+
     .itens-card-list {
         grid-template-columns: 1fr;
     }
-    
+
     .item-card {
         flex-direction: column;
         gap: 16px;
     }
-    
+
     .item-card__actions {
         width: 100%;
         justify-content: space-between;
     }
-    
+
     .quantity-wrapper {
         flex-direction: row;
         align-items: center;
     }
-    
+
     .save-actions {
         flex-direction: column;
         align-items: stretch;
     }
-    
+
     .login-container {
         padding: 16px;
-        align-items: flex-start; /* Permite scroll se o teclado abrir */
+        align-items: flex-start;
+        /* Permite scroll se o teclado abrir */
     }
-    
+
     .login-shell {
         flex-direction: column;
         min-height: auto;
         border-radius: var(--border-radius-md);
     }
-    
+
     .login-panel__brand {
         display: none;
     }
-    
+
     .login-panel__form {
         padding: 32px 20px;
     }
-    
+
     .login-logo--mobile {
         display: flex;
         width: 170px;
         max-width: 70%;
     }
-    
+
     .quantidade-input {
-        width: 80px; /* Pouco menor */
+        width: 80px;
+        /* Pouco menor */
     }
 }
 
@@ -1040,19 +1084,19 @@ body {
     .screen {
         padding: 12px;
     }
-    
+
     .page-title {
         font-size: 20px;
     }
-    
+
     .page-title .material-icons {
         font-size: 24px;
     }
-    
+
     .login-panel__form {
         padding: 24px 16px;
     }
-    
+
     .contagem-card .mdl-card__title,
     .contagem-card .mdl-card__supporting-text {
         padding: 16px;
@@ -1075,18 +1119,19 @@ body {
         flex-direction: column;
         align-items: stretch;
     }
-    
+
     .item-card__actions {
         flex-direction: column;
         align-items: flex-start;
         gap: 12px;
     }
-    
+
     .quantity-wrapper {
         width: 100%;
         justify-content: space-between;
     }
 }
-    .contagem-heading {
-        text-align: center;
-    }
+
+.contagem-heading {
+    text-align: center;
+}
