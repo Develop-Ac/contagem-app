@@ -351,7 +351,7 @@ function renderContagens(contagens) {
             </div>
             <div class="mdl-card__supporting-text">
                 <div class="contagem-info">
-                    <strong>ID:</strong> ${contagem.contagem_cuid}
+                    <strong>Piso:</strong> ${contagem.piso || '-'}
                 </div>
                 <div class="contagem-info">
                     <strong>Responsável:</strong> ${contagem.usuario?.nome || 'N/A'}
