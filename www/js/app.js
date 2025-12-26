@@ -64,7 +64,8 @@ window.handleSalvarContagem = async function handleSalvarContagem() {
         const bodyData = {
             contagem_cuid: currentContagem.contagem_cuid,
             contagem: currentContagem.contagem,
-            divergencia: temDivergencia
+            divergencia: temDivergencia,
+            itensParaRevalidar: window.failedValidationItems ? Array.from(window.failedValidationItems) : []
         };
         await makeRequest(`${API_BASE_URL}/estoque/contagem/liberar`, {
             method: 'PUT',
@@ -86,13 +87,11 @@ window.handleSalvarContagem = async function handleSalvarContagem() {
     showContagensScreen();
 };
 // Configuração da API
-// Configuração da API
 const hostname = window.location.hostname;
 const protocol = window.location.protocol;
 
-// Uses the same protocol as the frontend to prevent Mixed Content errors
-// If you access via HTTPS, it tries to connect to HTTPS backend.
-const API_BASE_URL = `${protocol}//estoque-service.acacessorios.local`;
+// Carrega da configuração global (definida em config.js) ou usa fallback seguro
+const API_BASE_URL = (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || 'http://127.0.0.1:8000';
 
 // Expose globally for SyncManager
 window.API_BASE_URL = API_BASE_URL;
@@ -592,7 +591,7 @@ function renderItens(itens, localState = {}) {
 
         // Card único por item
         const card = document.createElement('div');
-        card.className = 'item-card';
+        card.className = `item-card ${hasLocalValue ? 'item-card--saved' : ''}`;
         card.dataset.itemId = item.id;
         card.style.animationDelay = `${cardIndex * 0.05}s`;
         card.innerHTML = `
@@ -603,7 +602,7 @@ function renderItens(itens, localState = {}) {
                 </div>
                 <div class="item-card__meta">
                     <span>Localização: <strong>${item.localizacao || '-'}</strong></span>
-                    ${hasLocalValue ? `<span style="color:orange; font-size:10px;">${statusMessage}</span>` : ''}
+                    ${hasLocalValue ? `<span style="color:green; font-size:10px;">${statusMessage}</span>` : ''}
                 </div>
             </div>
             <div class="item-card__actions">
@@ -621,12 +620,11 @@ function renderItens(itens, localState = {}) {
                         data-tipo="locacao"
                         data-identificador-item="${item.identificador_item}"
                         data-tem-aplicacao="${item.tem_aplicacao || false}"
-                        onblur="handleQuantidadeChange(this, '${item.id}', '${item.cod_produto}')"
+                        ${hasLocalValue ? 'disabled' : ''}
                     >
                 </div>
                 <button type="button" class="item-save-btn" data-mode="save" onclick="toggleItemSave(this)">
-                    <i class="material-icons">check</i>
-                    Salvar
+                    ${hasLocalValue ? '<i class="material-icons">check</i> Salvo' : '<i class="material-icons">save</i> Salvar'}
                 </button>
             </div>
         `;
@@ -647,7 +645,7 @@ function renderItens(itens, localState = {}) {
     updateConcluirButtonState();
 }
 
-function toggleItemSave(button) {
+async function toggleItemSave(button) {
     const card = button.closest('.item-card');
     if (!card) return;
     if (!itensList) return;
@@ -662,11 +660,38 @@ function toggleItemSave(button) {
             return;
         }
 
-        input.disabled = true;
-        card.classList.add('item-card--saved');
+        // Recuperar IDs para acionar a validação
+        const itemId = input.dataset.itemId;
+        const codProduto = input.dataset.codProduto;
+
+        // Feedback visual de carregamento
+        const originalText = button.innerHTML;
         button.disabled = true;
-        button.innerHTML = '<i class="material-icons">check</i> Salvo';
-        itensList.appendChild(card);
+        button.textContent = 'Salvando...';
+
+        try {
+            // Força a execução da lógica de validação e envio (mesmo se já estava salvo local)
+            await handleQuantidadeChange(input, itemId, codProduto);
+
+            // Se chegou aqui sem erro, trava a UI
+            input.disabled = true;
+            card.classList.add('item-card--saved');
+
+            button.innerHTML = '<i class="material-icons">check</i> Salvo';
+            // button.disabled = true; // Mantém desabilitado
+
+            // Move para o final da lista (como já fazia)
+            itensList.appendChild(card);
+
+        } catch (error) {
+            console.error('Erro ao salvar item:', error);
+            showToast('Erro ao validar item. Tente novamente.');
+
+            // Restaura estado anterior em caso de erro
+            button.disabled = false;
+            button.innerHTML = originalText;
+            return;
+        }
     }
 
     updateConcluirButtonState();
@@ -781,6 +806,22 @@ async function conferirEstoqueSoma(itemId, codProduto, somaQuantidades, allInput
         // Se a soma for igual ao estoque real, marcar ambos como conferido (conferir: false)
         let conferir = somaQuantidades !== estoqueReal;
 
+        // --- ATUALIZAÇÃO LOCAL DO ESTOQUE ---
+        // Se a busca online teve sucesso, ATUALIZAMOS o log local com o estoque real recuperado.
+        // Isso garante que o dispositivo fique com o dado mais quente possível.
+        try {
+            // Recriar o objeto logData para atualizar apenas o estoque
+            // Precisamos do ID do user e contagem, que estão globais
+            const identificadorItem = allInputs[0].dataset.identificadorItem;
+            if (identificadorItem) {
+                // Atualiza logs locais que batem com esse identificador
+                await window.localDB.updateEstoqueByItem(identificadorItem, estoqueReal);
+                console.log(`[FRONT] Estoque local atualizado para ${estoqueReal} (Item ${identificadorItem})`);
+            }
+        } catch (dbError) {
+            console.warn("[FRONT] Falha ao atualizar estoque local:", dbError);
+        }
+
         const input = document.querySelector(`.quantidade-input[data-item-id='${itemId}']`);
         const temAplicacao = input && input.dataset.temAplicacao === 'true';
 
@@ -830,11 +871,23 @@ async function conferirEstoqueSoma(itemId, codProduto, somaQuantidades, allInput
         });
 
         updateConcluirButtonState();
+        updateConcluirButtonState();
     } catch (error) {
         console.error("Erro na conferência online:", error);
-        // Se falhar a conferência online (mas já salvou local), mantemos como pendente? 
-        // Ou mostramos erro? Melhor manter pendente e avisar.
-        showToast("Salvo localmente, mas erro ao conferir estoque servidor.");
+
+        // Se falhar a conferência online (mas já salvou local), mantemos como pendente.
+        // Adicionamos à lista de revalidação para tentar de novo ao concluir.
+        if (!window.failedValidationItems) window.failedValidationItems = new Set();
+        window.failedValidationItems.add(itemId);
+
+        showToast("Erro de conexão com ERP. Revalidaremos ao concluir.", "OK", 4000);
+
+        // Marca visualmente como erro/pendente crítico
+        allInputs.forEach(inp => {
+            inp.classList.remove('conferencia-ok', 'conferencia-divergente', 'conferencia-pendente');
+            inp.classList.add('conferencia-erro'); // Vermelho para chamar atenção? Ou amarelo?
+            // Vamos usar erro para indicar que precisa de atenção, mas permitir continuar.
+        });
     }
 }
 

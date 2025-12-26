@@ -100,6 +100,15 @@ class LocalDB {
     async clearCache(key) {
         return await this.db.app_cache.delete(key);
     }
+
+    // --- UTILS ---
+    async updateEstoqueByItem(identificadorItem, novoEstoque) {
+        // Atualiza o campo 'estoque' de todos os logs que tiverem esse identificador
+        // Usado para replicar o estoque real recuperado da API para os logs locais
+        return await this.db.logs
+            .where('identificador_item').equals(identificadorItem)
+            .modify({ estoque: novoEstoque });
+    }
 }
 
 // Export global instance
