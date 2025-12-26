@@ -88,37 +88,11 @@ window.handleSalvarContagem = async function handleSalvarContagem() {
 // Configuração da API
 // Configuração da API
 const hostname = window.location.hostname;
-const isLocalDev = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.') || hostname.startsWith('10.');
-
-// Se for dev/local, usa o MESMO IP na porta 8000. Se não, usa prod.
-const API_BASE_URL = isLocalDev
-    ? `http://${hostname}:8000`
-    : 'http://estoque-service.acacessorios.local';
+// Forçando uso do backend correto conforme solicitado
+const API_BASE_URL = 'http://estoque-service.acacessorios.local';
 
 // Expose globally for SyncManager
 window.API_BASE_URL = API_BASE_URL;
-
-window.testConnection = async function () {
-    try {
-        console.log(`Testando conexão com: ${API_BASE_URL}...`);
-        alert(`Tentando conectar em:\n${API_BASE_URL}\n\nPor favor, aguarde...`);
-
-        const response = await fetch(`${API_BASE_URL}/estoque/contagem/conferir/999999?empresa=3`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' }
-        });
-
-        if (response.ok || response.status === 404) {
-            // 404 means server is reachable but route doesnt exist (which is fine for connectivity test)
-            alert("SUCESSO!\n\nConexão com o servidor estabelecida com sucesso.");
-        } else {
-            alert(`ERRO DE RESPOSTA:\n\nStatus: ${response.status}\nTexto: ${response.statusText}`);
-        }
-    } catch (error) {
-        console.error("Erro de conexão teste:", error);
-        alert(`FALHA NA CONEXÃO:\n\nErro: ${error.message}\n\nVerifique:\n1. Se o backend está rodando na porta 8000.\n2. Se não há bloqueio de firewall.`);
-    }
-};
 
 // Estado da aplicação
 let currentUser = null;
@@ -534,15 +508,13 @@ async function loadItens() {
             if (pending && Array.isArray(pending)) logs = pending;
         }
 
-        // DEBUG: Mostrar toast com resultado da busca
-        const id1 = currentContagem.id;
-        const id2 = currentContagem.contagem;
-        console.log(`Debug Rehydration: Found ${logs.length} logs. Searched IDs: ${id1} (id) and ${id2} (contagem)`);
 
-        // MOSTRAR SEMPRE PARA DEBUG
-        showToast(`Busca Local: ID=${id1}/${id2} -> Encontrados: ${logs.length}`);
+        // DEBUG: Mostrar toast com resultado da busca (REMOVIDO PARA DEPLOY)
+        // console.log(`Debug Rehydration: Found ${logs.length} logs. Searched IDs: ${id1} (id) and ${id2} (contagem)`);
+        // showToast(`Busca Local: ID=${id1}/${id2} -> Encontrados: ${logs.length}`);
 
         if (logs.length > 0) {
+            // Opcional: mostrar aviso discreto
             // showToast(`Restaurados ${logs.length} itens da memória.`);
         }
 
@@ -893,8 +865,9 @@ async function enviarLogContagem(itemId, estoque) {
 
         // 1. Salvar SEMPRE no LocalDB primeiro
         const logId = await window.localDB.addLog(logData);
-        console.log(`Log salvo com ID ${logId} para Contagem ${logData.contagem_id} (Num: ${logData.contagem_num})`);
-        showToast(`Salvo! Ref: ${logData.contagem_id} / Num: ${logData.contagem_num} (LogID: ${logId})`);
+        // console.log(`Log salvo com ID ${logId} para Contagem ${logData.contagem_id} (Num: ${logData.contagem_num})`);
+
+        showToast('Item salvo!');
 
         // 2. Tentar disparar o sync (Se online)
         // O SyncManager vai cuidar de ler o banco e enviar.
