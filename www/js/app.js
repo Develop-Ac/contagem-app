@@ -88,8 +88,11 @@ window.handleSalvarContagem = async function handleSalvarContagem() {
 // Configuração da API
 // Configuração da API
 const hostname = window.location.hostname;
-// Forçando uso do backend correto conforme solicitado
-const API_BASE_URL = 'http://estoque-service.acacessorios.local';
+const protocol = window.location.protocol;
+
+// Uses the same protocol as the frontend to prevent Mixed Content errors
+// If you access via HTTPS, it tries to connect to HTTPS backend.
+const API_BASE_URL = `${protocol}//estoque-service.acacessorios.local`;
 
 // Expose globally for SyncManager
 window.API_BASE_URL = API_BASE_URL;
