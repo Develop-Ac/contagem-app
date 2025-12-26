@@ -1,22 +1,54 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Contagem - Login</title>
-    
+
     <!-- Material Design Lite -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
     <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
-    
+
     <!-- Nossos estilos -->
     <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .sync-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #333;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1000;
+            font-size: 14px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .sync-status.online {
+            background-color: #4CAF50;
+        }
+
+        .sync-status.offline {
+            background-color: #F44336;
+        }
+
+        .sync-status.syncing {
+            background-color: #2196F3;
+        }
+    </style>
 </head>
+
 <body>
     <!-- Container Principal -->
     <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
-        
+
         <!-- Header -->
         <header class="mdl-layout__header">
             <div class="mdl-layout__header-row">
@@ -34,7 +66,7 @@
 
         <!-- Main Content -->
         <main class="mdl-layout__content">
-            
+
             <!-- Tela de Login -->
             <div id="login-screen" class="screen active">
                 <div class="login-container">
@@ -55,14 +87,23 @@
                                 </div>
                                 <h4>Vamos iniciar</h4>
                                 <p class="form-subtitle">Entre com sua conta</p>
+                                <div style="text-align: center; margin-bottom: 20px;">
+                                    <button type="button" onclick="testConnection()"
+                                        style="font-size: 12px; padding: 5px; cursor: pointer; background: #eee; border: 1px solid #ccc; border-radius: 4px;">
+                                        Testar Conexão
+                                    </button>
+                                </div>
                                 <form id="login-form" class="login-form">
                                     <label class="sr-only" for="codigo">Código do Usuário</label>
-                                    <input class="login-input" type="text" id="codigo" name="codigo" placeholder="Código do Usuário" required>
+                                    <input class="login-input" type="text" id="codigo" name="codigo"
+                                        placeholder="Código do Usuário" required>
 
                                     <label class="sr-only" for="senha">Senha</label>
-                                    <input class="login-input" type="password" id="senha" name="senha" placeholder="Senha" required>
+                                    <input class="login-input" type="password" id="senha" name="senha"
+                                        placeholder="Senha" required>
 
-                                    <div id="login-loading" class="mdl-spinner mdl-js-spinner" style="display: none;"></div>
+                                    <div id="login-loading" class="mdl-spinner mdl-js-spinner" style="display: none;">
+                                    </div>
 
                                     <button type="submit" class="login-button">
                                         Entrar
@@ -86,11 +127,11 @@
                             Minhas Tarefas
                         </h3>
                     </div>
-                    
+
                     <div id="contagens-loading" class="loading-center">
                         <div class="mdl-spinner mdl-js-spinner is-active"></div>
                     </div>
-                    
+
                     <div id="contagens-grid" class="contagens-grid"></div>
                 </div>
             </div>
@@ -107,19 +148,19 @@
                             Itens para Conferência
                         </h3>
                     </div>
-                    
+
                     <div class="contagem-heading">
                         <span id="contagem-heading">Contagem #--</span>
                     </div>
-                    
+
                     <div id="itens-loading" class="loading-center">
                         <div class="mdl-spinner mdl-js-spinner is-active"></div>
                     </div>
-                    
+
                     <div id="itens-card-container" class="table-container itens-card-container">
                         <div id="itens-list" class="itens-card-list"></div>
                     </div>
-                    
+
                     <!-- Botão Salvar -->
                     <div class="save-actions">
                         <button id="salvar-btn" class="primary-save-btn" disabled onclick="handleSalvarContagem();">
@@ -141,17 +182,31 @@
         <button class="mdl-snackbar__action" type="button"></button>
     </div>
 
+    <div id="sync-status" class="sync-status" style="display: none;">
+        <i class="material-icons">cloud_off</i>
+        <span class="sync-text">Sem Conexão</span>
+    </div>
+
+    <script src="js/dexie.js"></script>
+    <script src="js/db.js"></script>
+    <script src="js/sync.js"></script>
     <script src="js/app.js"></script>
     <!-- Modal de Confirmação de Saída -->
-    <div id="confirm-exit-modal" style="display:none;position:fixed;z-index:9999;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
-        <div style="background:#fff;padding:32px 24px;border-radius:8px;max-width:90vw;min-width:280px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,0.2);">
+    <div id="confirm-exit-modal"
+        style="display:none;position:fixed;z-index:9999;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
+        <div
+            style="background:#fff;padding:32px 24px;border-radius:8px;max-width:90vw;min-width:280px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,0.2);">
             <h4>Tem certeza que deseja sair?</h4>
             <p>Se você atualizar ou sair da página, pode perder dados não salvos.</p>
             <div style="margin-top:24px;display:flex;gap:16px;justify-content:center;">
-                <button id="confirm-exit-btn" style="background:#d32f2f;color:#fff;padding:8px 20px;border:none;border-radius:4px;cursor:pointer;">Sim, sair</button>
-                <button id="cancel-exit-btn" style="background:#757575;color:#fff;padding:8px 20px;border:none;border-radius:4px;cursor:pointer;">Cancelar</button>
+                <button id="confirm-exit-btn"
+                    style="background:#d32f2f;color:#fff;padding:8px 20px;border:none;border-radius:4px;cursor:pointer;">Sim,
+                    sair</button>
+                <button id="cancel-exit-btn"
+                    style="background:#757575;color:#fff;padding:8px 20px;border:none;border-radius:4px;cursor:pointer;">Cancelar</button>
             </div>
         </div>
     </div>
 </body>
+
 </html>

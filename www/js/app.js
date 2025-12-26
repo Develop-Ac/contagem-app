@@ -71,10 +71,18 @@ window.handleSalvarContagem = async function handleSalvarContagem() {
             body: JSON.stringify(bodyData)
         });
         showToast(temDivergencia ? 'Contagem com divergência liberada!' : 'Contagem finalizada!');
+
+        // --- CLEANUP ---
+        // Se concluiu com sucesso, limpa os logs locais desta contagem
+        // para evitar que reapareçam em uma futura contagem com mesmo número.
+        console.log("Limpando cache local para contagem:", currentContagem.contagem);
+        await window.localDB.clearLogsByContagem(currentContagem.contagem);
+
     } catch (error) {
         showToast('Erro ao liberar contagem!');
     }
     // Volta para a listagem de contagens
+    localStorage.removeItem('currentContagem'); // Limpa persistencia
     showContagensScreen();
 };
 // Configuração da API
@@ -86,6 +94,31 @@ const isLocalDev = hostname === 'localhost' || hostname === '127.0.0.1' || hostn
 const API_BASE_URL = isLocalDev
     ? `http://${hostname}:8000`
     : 'http://estoque-service.acacessorios.local';
+
+// Expose globally for SyncManager
+window.API_BASE_URL = API_BASE_URL;
+
+window.testConnection = async function () {
+    try {
+        console.log(`Testando conexão com: ${API_BASE_URL}...`);
+        alert(`Tentando conectar em:\n${API_BASE_URL}\n\nPor favor, aguarde...`);
+
+        const response = await fetch(`${API_BASE_URL}/estoque/contagem/conferir/999999?empresa=3`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (response.ok || response.status === 404) {
+            // 404 means server is reachable but route doesnt exist (which is fine for connectivity test)
+            alert("SUCESSO!\n\nConexão com o servidor estabelecida com sucesso.");
+        } else {
+            alert(`ERRO DE RESPOSTA:\n\nStatus: ${response.status}\nTexto: ${response.statusText}`);
+        }
+    } catch (error) {
+        console.error("Erro de conexão teste:", error);
+        alert(`FALHA NA CONEXÃO:\n\nErro: ${error.message}\n\nVerifique:\n1. Se o backend está rodando na porta 8000.\n2. Se não há bloqueio de firewall.`);
+    }
+};
 
 // Estado da aplicação
 let currentUser = null;
@@ -117,12 +150,29 @@ document.addEventListener('DOMContentLoaded', function () {
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
         currentUser = JSON.parse(savedUser);
-        showContagensScreen();
+
+        // RECUPERAR ESTADO DA NAVEGAÇÃO
+        const savedContagem = localStorage.getItem('currentContagem');
+        if (savedContagem) {
+            try {
+                currentContagem = JSON.parse(savedContagem);
+                console.log("Restaurando contagem ativa:", currentContagem.contagem);
+                showItensScreen();
+            } catch (e) {
+                console.error("Erro ao restaurar contagem:", e);
+                showContagensScreen();
+            }
+        } else {
+            showContagensScreen();
+        }
     }
 
     // Event listeners
     loginForm.addEventListener('submit', handleLogin);
-    backBtn.addEventListener('click', () => showContagensScreen());
+    backBtn.addEventListener('click', () => {
+        localStorage.removeItem('currentContagem'); // Limpa persistencia
+        showContagensScreen();
+    });
     logoutBtn.addEventListener('click', handleLogout);
 
     // Debug: verificar se o botÃ£o salvar existe
@@ -195,7 +245,7 @@ async function makeRequest(url, options = {}) {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            const errorMessage = errorData.message || errorData.error || `HTTP error! status: ${response.status}`;
+            const errorMessage = errorData.message || errorData.error || `Erro HTTP! status: ${response.status}`;
             throw new Error(errorMessage);
         }
 
@@ -245,11 +295,11 @@ async function handleLogin(event) {
             showToast('Login realizado com sucesso!');
             showContagensScreen();
         } else {
-            showToast(response.message || 'Erro no login');
+            showToast(response.message || 'Erro na sincronização');
         }
     } catch (error) {
         console.error('Erro no login:', error);
-        showToast('Erro de conexÃ£o. Tente novamente.');
+        showToast('Erro de conexão. Tente novamente.');
     } finally {
         loginLoading.style.display = 'none';
         submitButton.disabled = false;
@@ -293,24 +343,78 @@ async function showContagensScreen() {
     await loadContagens();
 }
 
-// FunÃ§Ã£o para carregar contagens
+// FunÃ§Ã£o para carregar contagens (Com suporte Offline)
 async function loadContagens() {
     if (!currentUser) return;
 
     contagensLoading.style.display = 'flex';
     contagensGrid.innerHTML = '';
 
-    try {
-        const response = await makeRequest(`${API_BASE_URL}/estoque/contagem/${currentUser.id}`);
+    console.log('--- loadContagens ---');
+    console.log('Current User:', currentUser);
 
-        if (Array.isArray(response)) {
-            renderContagens(response);
-        } else {
-            showToast('Erro ao carregar contagens');
+    if (!currentUser || !currentUser.id) {
+        showToast("Erro: Usuário não identificado. Faça login novamente.");
+        return;
+    }
+
+    // Key para cache
+    const cacheKey = `contagens_${currentUser.id}`;
+
+    try {
+        // 1. Tentar pegar da API
+        if (navigator.onLine) {
+            try {
+                const response = await makeRequest(`${API_BASE_URL}/estoque/contagem/${currentUser.id}`);
+
+                if (Array.isArray(response)) {
+                    // Sucesso API: Renderiza e Salva no Cache
+                    await window.localDB.saveCache(cacheKey, response);
+
+                    const liberadas = response.filter(c => c.liberado_contagem === true).length;
+                    showToast(`Conectado! ${response.length} contagens encontradas (${liberadas} liberadas).`);
+
+                    renderContagens(response);
+                    return; // Fim com sucesso via API
+                }
+            } catch (apiError) {
+                console.warn('Erro ao carregar da API, tentando cache...', apiError);
+                // MOSTRAR ERRO REAL DA API PARA DEBUG
+                let msg = apiError;
+                if (apiError instanceof Error) msg = apiError.message;
+                else if (typeof apiError === 'object') msg = JSON.stringify(apiError);
+
+                showToast(`Erro API: ${msg}`, null, 5000);
+            }
         }
+
+        // 2. Fallback para Cache (Se offline ou erro na API)
+        const cachedData = await window.localDB.getCache(cacheKey);
+
+        if (cachedData && Array.isArray(cachedData)) {
+            showToast('Mostrando dados Sem Conexão', null, 2000);
+            renderContagens(cachedData);
+        } else {
+            // Se não tem cache nem API
+            if (!navigator.onLine) {
+                showToast('Sem conexão e sem dados locais.');
+                contagensGrid.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #666;">
+                        <i class="material-icons" style="font-size: 48px; margin-bottom: 16px; color: #F44336;">wifi_off</i>
+                        <h4 style="color: #333; margin-bottom: 8px;">Você está Sem Conexão</h4>
+                        <p style="color: #666;">Não existem contagens salvas neste dispositivo.</p>
+                    </div>
+                `;
+            } else {
+                showToast('Erro ao carregar contagens');
+            }
+        }
+
     } catch (error) {
-        console.error('Erro ao carregar contagens:', error);
-        showToast(`Erro: ${error.message}`);
+        console.error('Erro geral ao carregar contagens:', error);
+        // Show detailed error in toaster
+        const errorMsg = error.message || "Erro desconhecido";
+        showToast(`Erro ao carregar: ${errorMsg}`);
     } finally {
         contagensLoading.style.display = 'none';
     }
@@ -379,6 +483,9 @@ function renderContagens(contagens) {
 async function showItensScreen() {
     if (!currentContagem) return;
 
+    // PERSISTÊNCIA DE NAVEGAÇÃO: Salvar referência para reload
+    localStorage.setItem('currentContagem', JSON.stringify(currentContagem));
+
     showScreen('itens-screen');
 
     // Resetar estados
@@ -396,22 +503,71 @@ async function showItensScreen() {
     await loadItens();
 }
 
-// FunÃ§Ã£o para carregar itens (simulaÃ§Ã£o, jÃ¡ que os itens vÃªm na contagem)
+// FunÃ§Ã£o para carregar itens
 async function loadItens() {
     if (!currentContagem || !currentContagem.itens) return;
 
     itensLoading.style.display = 'flex';
     itensList.innerHTML = '';
 
-    // Simular delay para loading
-    setTimeout(() => {
-        renderItens(currentContagem.itens);
+    try {
+        // Sticky Data: Buscar TODOS os logs desta contagem (mesmo os sincronizados)
+        // Isso garante que o valor local "vença" e permaneça na tela mesmo se a API 
+        // ainda não retornou o total atualizado no endpoint da lista.
+        let logs = [];
+
+        // 1. Tentar buscar pelo Número Estável (contagem_num) -> Mais confiável
+        if (currentContagem.contagem) {
+            const byNum = await window.localDB.getLogsByContagemNum(currentContagem.contagem);
+            if (byNum && Array.isArray(byNum)) logs = logs.concat(byNum);
+        }
+
+        // 2. Fallback: buscar por ID original (caso existam logs antigos ou sync via ID)
+        if (currentContagem.id) {
+            const byId = await window.localDB.getLogsByContagem(currentContagem.id);
+            if (byId && Array.isArray(byId)) logs = logs.concat(byId);
+        }
+
+        // Se ainda não achou nada (ex: primeira vez), tenta logs pendentes gerais (fallback)
+        if (logs.length === 0) {
+            const pending = await window.localDB.getPendingLogs();
+            if (pending && Array.isArray(pending)) logs = pending;
+        }
+
+        // DEBUG: Mostrar toast com resultado da busca
+        const id1 = currentContagem.id;
+        const id2 = currentContagem.contagem;
+        console.log(`Debug Rehydration: Found ${logs.length} logs. Searched IDs: ${id1} (id) and ${id2} (contagem)`);
+
+        // MOSTRAR SEMPRE PARA DEBUG
+        showToast(`Busca Local: ID=${id1}/${id2} -> Encontrados: ${logs.length}`);
+
+        if (logs.length > 0) {
+            // showToast(`Restaurados ${logs.length} itens da memória.`);
+        }
+
+        // Criar mapa de ItemID -> Ultimo Log
+        const localState = {};
+        if (logs && Array.isArray(logs)) {
+            // Ordenar por data de criação para garantir que o último prevaleça
+            logs.sort((a, b) => (a.creationTime || 0) - (b.creationTime || 0));
+
+            logs.forEach(log => {
+                localState[log.item_id] = log;
+            });
+        }
+
+        renderItens(currentContagem.itens, localState);
+    } catch (e) {
+        console.error("Erro ao carregar itens/logs:", e);
+        renderItens(currentContagem.itens, {});
+    } finally {
         itensLoading.style.display = 'none';
-    }, 500);
+    }
 }
 
-// FunÃ§Ã£o para renderizar itens na tabela
-function renderItens(itens) {
+// Função para renderizar itens na tabela
+function renderItens(itens, localState = {}) {
     itensList.innerHTML = '';
 
     if (!itens || itens.length === 0) {
@@ -428,8 +584,6 @@ function renderItens(itens) {
     // Filtrar apenas itens com conferir = true
     let itensParaConferir = itens.filter(item => item.conferir === true);
 
-    // NÃO ordenar antes de gerar os cards
-
     if (itensParaConferir.length === 0) {
         const doneState = document.createElement('div');
         doneState.className = 'itens-empty sucesso';
@@ -445,6 +599,22 @@ function renderItens(itens) {
     let cardIndex = 0;
     const allCards = [];
     itensParaConferir.forEach((item) => {
+        // Verificar se tem estado local salvo (Rehydration)
+        const savedLog = localState[item.id];
+        const hasLocalValue = savedLog !== undefined;
+        // Prioridade: Valor Local > Valor da API (que geralmente vem 0 ou desatualizado se tiver delay)
+        // Mas se a API tiver um valor (ex: jÃ¡ contado antes) e nÃ£o tiver local, usa API.
+        // Assumindo que input deve mostrar o que foi contado.
+
+        // Se tiver log pendente, usa ele. Se nÃ£o, usa o valor que veio da API (se houver, mas geralmente a API nÃ£o manda o "input", manda o estoque)
+        // Espere, o endpoint getContagens retorna o que? 
+        // Retorna a lista de itens. O item nÃ£o tem "quantidade contada" nele persistida separadamente alÃ©m dos logs.
+        // EntÃ£o o input comeÃ§a vazio ou com valor local.
+
+        const inputValue = hasLocalValue ? savedLog.contado : '';
+        const statusClass = hasLocalValue ? 'conferencia-pendente' : '';
+        const statusMessage = hasLocalValue ? ' (Salvo Local)' : '';
+
         // Card único por item
         const card = document.createElement('div');
         card.className = 'item-card';
@@ -458,6 +628,7 @@ function renderItens(itens) {
                 </div>
                 <div class="item-card__meta">
                     <span>Localização: <strong>${item.localizacao || '-'}</strong></span>
+                    ${hasLocalValue ? `<span style="color:orange; font-size:10px;">${statusMessage}</span>` : ''}
                 </div>
             </div>
             <div class="item-card__actions">
@@ -465,7 +636,8 @@ function renderItens(itens) {
                     <label>Qtd</label>
                     <input 
                         type="number" 
-                        class="quantidade-input" 
+                        class="quantidade-input ${statusClass}" 
+                        value="${inputValue}"
                         placeholder="0"
                         min="0"
                         step="1"
@@ -589,8 +761,43 @@ async function handleQuantidadeChange(input, itemId, codProduto) {
 
 // FunÃ§Ã£o para conferir estoque
 // Nova função para conferir estoque somando locação e sublocação
+// FunÃ§Ã£o para conferir estoque
+// Nova função para conferir estoque somando locação e sublocação
 async function conferirEstoqueSoma(itemId, codProduto, somaQuantidades, allInputs) {
+
+    // 1. SALVAR LOCALMENTE PRIMEIRO (Offline-First)
+    // Marca visualmente como Pendente/Salvo Local enquanto processa
+    allInputs.forEach(inp => {
+        inp.classList.remove('conferencia-ok', 'conferencia-divergente', 'conferencia-erro');
+        inp.classList.add('conferencia-pendente');
+        inp.dataset.temDivergencia = 'false';
+    });
+
     try {
+        // Salva no IndexedDB imediatamente com estoque 0 (será atualizado ou ignorado pelo backend na validação)
+        // O importante é garantir que o "contado" (somaQuantidades) esteja salvo.
+        // Nota: enviarLogContagem já chama o syncManager.triggerSync() se estiver online.
+        await enviarLogContagem(itemId, 0);
+    } catch (e) {
+        console.error("Erro ao salvar localmente:", e);
+        showToast("Erro ao salvar dados no dispositivo!");
+        return; // Se não salvou local, nem tenta rede.
+    }
+
+    const isOnline = navigator.onLine;
+
+    // Se estiver offline, paramos por aqui (já salvou e marcou pendente/amarelo)
+    if (!isOnline) {
+        console.log('Dispositivo Offline: Dados salvos localmente.');
+        showToast('Salvo offline. Será sincronizado quando retomar conexão.');
+        updateConcluirButtonState();
+        return;
+    }
+
+    // 2. SE ONLINE: Conferir divergência com o servidor
+    try {
+        console.log('Dispositivo Online: Conferindo estoque...');
+
         // Fazer GET para conferir estoque
         const response = await makeRequest(`${API_BASE_URL}/estoque/contagem/conferir/${codProduto}?empresa=3`);
         const estoqueReal = response.ESTOQUE;
@@ -599,27 +806,17 @@ async function conferirEstoqueSoma(itemId, codProduto, somaQuantidades, allInput
         // Se a soma for igual ao estoque real, marcar ambos como conferido (conferir: false)
         let conferir = somaQuantidades !== estoqueReal;
 
-        // LÓGICA DE APLICAÇÃO:
-        // Se o produto tem aplicação, a primeira contagem não deve gerar divergência imediata (stay pending).
-        // Assumimos que o backend fará a soma com a segunda contagem.
-        // Portanto, enviamos conferir = false para indicar que "esta" contagem foi concluída pelo usuário.
-        // Se houver divergência na soma total, o backend deverá reabrir o item.
         const input = document.querySelector(`.quantidade-input[data-item-id='${itemId}']`);
         const temAplicacao = input && input.dataset.temAplicacao === 'true';
-
-        console.log(`Produto ${codProduto} - Tem Aplicação: ${temAplicacao}`);
 
         if (temAplicacao) {
             console.log(`Produto ${codProduto} - Item com aplicação: Marcando como conferido (conferir: false) para aguardar segunda contagem.`);
             conferir = false;
-            // Nota: Se a soma for realmente divergente após os dois contarem, 
-            // o backend deve ser responsável por setar conferir = true novamente.
         }
 
         console.log(`Produto ${codProduto} - Conferir final: ${conferir} (Estoque: ${estoqueReal}, Contado: ${somaQuantidades}) {itemId: ${itemId}}`);
 
-        // Atualizar o item de contagem (apenas 1 chamada, pois é o mesmo ID)
-        // Buscar o identificador_item do item atual
+        // Atualizar o item de contagem
         let identificadorItem = null;
         if (currentContagem && Array.isArray(currentContagem.itens)) {
             const itemObj = currentContagem.itens.find(it => it.id === itemId);
@@ -631,13 +828,7 @@ async function conferirEstoqueSoma(itemId, codProduto, somaQuantidades, allInput
             throw new Error('identificador_item não encontrado para o item');
         }
 
-        // MOVIDO PARA ANTES DO UPDATE: Enviar log da contagem PRÉVIAMENTE
-        // Isso garante que o backend tenha o valor contado mais recente ao calcular a divergência.
-        // O Log deve ser enviado para o ITEM específico que foi digitado (itemId).
-        // OBS: Enviamos a soma parcial deste item, não a soma total do produto (o backend que some se quiser, ou usamos logs individuais).
-        // A função enviarLogContagem pega o valor do input do itemId.
-        await enviarLogContagem(itemId, estoqueReal);
-
+        // UPDATE no servidor para marcar se está conferido ou não
         await makeRequest(`${API_BASE_URL}/estoque/contagem/item/${identificadorItem}`, {
             method: 'PUT',
             body: JSON.stringify({
@@ -646,7 +837,7 @@ async function conferirEstoqueSoma(itemId, codProduto, somaQuantidades, allInput
             })
         });
 
-        // Limpar classes anteriores e aplicar feedback visual em todos os inputs
+        // Atualizar feedback visual Definitivo (Verde/Vermelho)
         allInputs.forEach(inp => {
             inp.classList.remove('conferencia-ok', 'conferencia-divergente', 'conferencia-erro', 'conferencia-pendente');
             if (conferir) {
@@ -654,9 +845,8 @@ async function conferirEstoqueSoma(itemId, codProduto, somaQuantidades, allInput
                 inp.dataset.temDivergencia = 'true';
             } else {
                 if (temAplicacao && somaQuantidades !== estoqueReal) {
-                    // Visualmente indicamos que está pendente/parcial, mas salvo
                     inp.classList.add('conferencia-pendente');
-                    inp.dataset.temDivergencia = 'false'; // Não bloqueia a saída
+                    inp.dataset.temDivergencia = 'false';
                 } else {
                     inp.classList.add('conferencia-ok');
                     inp.dataset.temDivergencia = 'false';
@@ -666,30 +856,32 @@ async function conferirEstoqueSoma(itemId, codProduto, somaQuantidades, allInput
 
         updateConcluirButtonState();
     } catch (error) {
-        throw error;
+        console.error("Erro na conferência online:", error);
+        // Se falhar a conferência online (mas já salvou local), mantemos como pendente? 
+        // Ou mostramos erro? Melhor manter pendente e avisar.
+        showToast("Salvo localmente, mas erro ao conferir estoque servidor.");
     }
 }
 
 
-// FunÃ§Ã£o para enviar log da contagem para a API
-// Removido argumento 'contado' pois vamos ler do input diretamente para ser atomicamente correto com a UI
+// FunÃ§Ã£o para enviar log da contagem (Agora Offline-First)
 async function enviarLogContagem(itemId, estoque) {
     try {
-        // Somar os valores digitados para locação e sub locação
         let totalContado = 0;
         let identificadorItem = null;
         const inputs = document.querySelectorAll(`.quantidade-input[data-item-id='${itemId}']`);
+
         inputs.forEach(input => {
             const val = parseInt(input.value);
             if (!isNaN(val)) totalContado += val;
-            // Capturar identificador_item do primeiro input (será o mesmo para todos os inputs do mesmo item)
             if (!identificadorItem && input.dataset.identificadorItem) {
                 identificadorItem = input.dataset.identificadorItem;
             }
         });
 
         const logData = {
-            contagem_id: currentContagem.id, // ID específico da contagem (ex: clx...type1)
+            contagem_id: currentContagem.id, // Mantemos o ID original para Sync
+            contagem_num: currentContagem.contagem, // Adicionamos Número Estável para Persistência Local
             usuario_id: currentUser.id,
             item_id: itemId,
             estoque: estoque,
@@ -697,22 +889,27 @@ async function enviarLogContagem(itemId, estoque) {
             identificador_item: identificadorItem
         };
 
-        console.log('Enviando log da contagem:', logData);
+        console.log('Salvando log localmente:', logData);
 
-        const response = await makeRequest(`${API_BASE_URL}/estoque/contagem/log`, {
-            method: 'POST',
-            body: JSON.stringify(logData)
-        });
+        // 1. Salvar SEMPRE no LocalDB primeiro
+        const logId = await window.localDB.addLog(logData);
+        console.log(`Log salvo com ID ${logId} para Contagem ${logData.contagem_id} (Num: ${logData.contagem_num})`);
+        showToast(`Salvo! Ref: ${logData.contagem_id} / Num: ${logData.contagem_num} (LogID: ${logId})`);
 
-        console.log('Log enviado com sucesso:', response);
+        // 2. Tentar disparar o sync (Se online)
+        // O SyncManager vai cuidar de ler o banco e enviar.
+        if (window.syncManager) {
+            window.syncManager.triggerSync();
+        }
 
     } catch (error) {
-        console.error('Erro ao enviar log da contagem:', error);
-        // Não interromper o fluxo principal mesmo se o log falhar
+        console.error('Erro ao salvar log local:', error);
+        let msg = error.message || error;
+        showToast(`Erro crítico ao salvar: ${msg}`);
     }
 }
 
-// FunÃ§Ã£o para focar no prÃ³ximo input
+// Função para focar no próximo input
 function focusNextInput(currentInput) {
     const allInputs = document.querySelectorAll('.quantidade-input');
     const currentIndex = Array.from(allInputs).indexOf(currentInput);
