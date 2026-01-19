@@ -197,15 +197,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // FunÃ§Ã£o para mostrar toast
 function showToast(message, actionText = '', timeout = 3000) {
-    const snackbar = toast.MaterialSnackbar;
-    const data = {
-        message: message,
-        timeout: timeout
-    };
-    if (actionText) {
-        data.actionText = actionText;
+    if (toast && toast.MaterialSnackbar && typeof toast.MaterialSnackbar.showSnackbar === 'function') {
+        const snackbar = toast.MaterialSnackbar;
+        const data = {
+            message: message,
+            timeout: timeout
+        };
+        if (actionText) {
+            data.actionText = actionText;
+        }
+        snackbar.showSnackbar(data);
+    } else {
+        // Fallback: use alert if snackbar is not available
+        alert(message);
     }
-    snackbar.showSnackbar(data);
 }
 
 // FunÃ§Ã£o para fazer requisiÃ§Ãµes HTTP
