@@ -82,8 +82,10 @@ window.handleSalvarContagem = async function handleSalvarContagem() {
     } catch (error) {
         showToast('Erro ao liberar contagem!');
     }
-    // Volta para a listagem de contagens
-    localStorage.removeItem('currentContagem'); // Limpa persistencia
+    // Salva o estado atual da contagem no localStorage
+    if (currentContagem) {
+        localStorage.setItem('currentContagem', JSON.stringify(currentContagem));
+    }
     showContagensScreen();
 };
 // Configuração da API
@@ -122,7 +124,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Ajusta estado inicial da classe do body baseada na tela ativa
     document.body.classList.toggle('login-screen-active', loginScreen.classList.contains('active'));
 
-    // Verificar se jÃ¡ estÃ¡ logado
+    // Verificar se já está logado
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
         currentUser = JSON.parse(savedUser);
@@ -134,6 +136,21 @@ document.addEventListener('DOMContentLoaded', function () {
                 currentContagem = JSON.parse(savedContagem);
                 console.log("Restaurando contagem ativa:", currentContagem.contagem);
                 showItensScreen();
+
+                // Preencher campos com dados salvos
+                setTimeout(() => {
+                    const cards = document.querySelectorAll('.item-card');
+                    if (currentContagem.itens) {
+                        cards.forEach(card => {
+                            const input = card.querySelector('.quantidade-input');
+                            const itemId = card.dataset.itemId;
+                            if (input && currentContagem.itens[itemId]) {
+                                input.value = currentContagem.itens[itemId].quantidade || '';
+                            }
+                        });
+                    }
+                }, 100);
+
             } catch (e) {
                 console.error("Erro ao restaurar contagem:", e);
                 showContagensScreen();
