@@ -675,6 +675,7 @@ async function toggleItemSave(button) {
     const input = card.querySelector('.quantidade-input');
     if (!input) return;
 
+
     if (button.dataset.mode === 'save') {
         if (!input.value || input.value.trim() === '') {
             showToast('Informe a quantidade antes de salvar');
@@ -701,6 +702,18 @@ async function toggleItemSave(button) {
 
             button.innerHTML = '<i class="material-icons">check</i> Salvo';
             // button.disabled = true; // Mantém desabilitado
+
+            // Salvar no localStorage
+            let savedItens = JSON.parse(localStorage.getItem('itensSalvos') || '[]');
+            // Remove se já existe
+            savedItens = savedItens.filter(i => i.itemId !== itemId);
+            savedItens.push({
+                itemId,
+                codProduto,
+                quantidade: input.value,
+                timestamp: Date.now()
+            });
+            localStorage.setItem('itensSalvos', JSON.stringify(savedItens));
 
             // Move para o final da lista (como já fazia)
             itensList.appendChild(card);
@@ -773,106 +786,6 @@ async function handleQuantidadeChange(input, itemId, codProduto) {
         showToast('Erro ao conferir estoque');
         inputsDoProduto.forEach(inp => {
             inp.classList.remove('conferencia-ok', 'conferencia-divergente');
-            inp.classList.add('conferencia-erro');
-            setTimeout(() => {
-                inp.classList.remove('conferencia-erro');
-            }, 3000);
-        });
-    }
-}
-
-// FunÃ§Ã£o para conferir estoque
-// Nova função para conferir estoque somando locação e sublocação
-// FunÃ§Ã£o para conferir estoque
-// Nova função para conferir estoque somando locação e sublocação
-async function conferirEstoqueSoma(itemId, codProduto, somaQuantidades, allInputs) {
-
-    // 1. SALVAR LOCALMENTE PRIMEIRO (Offline-First)
-    // Marca visualmente como Pendente/Salvo Local enquanto processa
-    allInputs.forEach(inp => {
-        inp.classList.remove('conferencia-ok', 'conferencia-divergente', 'conferencia-erro');
-        inp.classList.add('conferencia-pendente');
-        inp.dataset.temDivergencia = 'false';
-    });
-
-    try {
-        // Salva no IndexedDB imediatamente com estoque 0 (será atualizado ou ignorado pelo backend na validação)
-        // O importante é garantir que o "contado" (somaQuantidades) esteja salvo.
-        // Nota: enviarLogContagem já chama o syncManager.triggerSync() se estiver online.
-        await enviarLogContagem(itemId, 0);
-    } catch (e) {
-        console.error("Erro ao salvar localmente:", e);
-        showToast("Erro ao salvar dados no dispositivo!");
-        return; // Se não salvou local, nem tenta rede.
-    }
-
-    const isOnline = navigator.onLine;
-
-    // Se estiver offline, paramos por aqui (já salvou e marcou pendente/amarelo)
-    if (!isOnline) {
-        console.log('Dispositivo Offline: Dados salvos localmente.');
-        showToast('Salvo offline. Será sincronizado quando retomar conexão.');
-        updateConcluirButtonState();
-        return;
-    }
-
-    // 2. SE ONLINE: Conferir divergência com o servidor
-    try {
-        console.log('Dispositivo Online: Conferindo estoque...');
-
-        // Fazer GET para conferir estoque
-        const response = await makeRequest(`${API_BASE_URL}/estoque/contagem/conferir/${codProduto}?empresa=3`);
-        const estoqueReal = response.ESTOQUE;
-        console.log(`Produto ${codProduto} - Quantidade em estoque: ${estoqueReal}`);
-
-        // Se a soma for igual ao estoque real, marcar ambos como conferido (conferir: false)
-        let conferir = somaQuantidades !== estoqueReal;
-
-        // --- ATUALIZAÇÃO LOCAL DO ESTOQUE ---
-        // Se a busca online teve sucesso, ATUALIZAMOS o log local com o estoque real recuperado.
-        // Isso garante que o dispositivo fique com o dado mais quente possível.
-        try {
-            // Recriar o objeto logData para atualizar apenas o estoque
-            // Precisamos do ID do user e contagem, que estão globais
-            const identificadorItem = allInputs[0].dataset.identificadorItem;
-            if (identificadorItem) {
-                // Atualiza logs locais que batem com esse identificador
-                await window.localDB.updateEstoqueByItem(identificadorItem, estoqueReal);
-                console.log(`[FRONT] Estoque local atualizado para ${estoqueReal} (Item ${identificadorItem})`);
-            }
-        } catch (dbError) {
-            console.warn("[FRONT] Falha ao atualizar estoque local:", dbError);
-        }
-
-        const input = document.querySelector(`.quantidade-input[data-item-id='${itemId}']`);
-        const temAplicacao = input && input.dataset.temAplicacao === 'true';
-
-        if (temAplicacao) {
-            console.log(`Produto ${codProduto} - Item com aplicação: Marcando como conferido (conferir: false) para aguardar segunda contagem.`);
-            conferir = false;
-        }
-
-        console.log(`Produto ${codProduto} - Conferir final: ${conferir} (Estoque: ${estoqueReal}, Contado: ${somaQuantidades}) {itemId: ${itemId}}`);
-
-        // Atualizar o item de contagem
-        let identificadorItem = null;
-        if (currentContagem && Array.isArray(currentContagem.itens)) {
-            const itemObj = currentContagem.itens.find(it => it.id === itemId);
-            if (itemObj && itemObj.identificador_item) {
-                identificadorItem = itemObj.identificador_item;
-            }
-        }
-        if (!identificadorItem) {
-            throw new Error('identificador_item não encontrado para o item');
-        }
-
-        // UPDATE no servidor para marcar se está conferido ou não
-        await makeRequest(`${API_BASE_URL}/estoque/contagem/item/${identificadorItem}`, {
-            method: 'PUT',
-            body: JSON.stringify({
-                conferir: conferir,
-                itemId: itemId
-            })
         });
 
         // Atualizar feedback visual Definitivo (Verde/Vermelho)
@@ -894,22 +807,6 @@ async function conferirEstoqueSoma(itemId, codProduto, somaQuantidades, allInput
 
         updateConcluirButtonState();
         updateConcluirButtonState();
-    } catch (error) {
-        console.error("Erro na conferência online:", error);
-
-        // Se falhar a conferência online (mas já salvou local), mantemos como pendente.
-        // Adicionamos à lista de revalidação para tentar de novo ao concluir.
-        if (!window.failedValidationItems) window.failedValidationItems = new Set();
-        window.failedValidationItems.add(itemId);
-
-        showToast("Erro de conexão com ERP. Revalidaremos ao concluir.", "OK", 4000);
-
-        // Marca visualmente como erro/pendente crítico
-        allInputs.forEach(inp => {
-            inp.classList.remove('conferencia-ok', 'conferencia-divergente', 'conferencia-pendente');
-            inp.classList.add('conferencia-erro'); // Vermelho para chamar atenção? Ou amarelo?
-            // Vamos usar erro para indicar que precisa de atenção, mas permitir continuar.
-        });
     }
 }
 
@@ -1085,6 +982,3 @@ function exportarDados() {
 
     showToast('Dados exportados com sucesso!');
 }
-
-
-
