@@ -759,9 +759,7 @@ async function handleQuantidadeChange(input, itemId, codProduto) {
     }
 }
 
-// FunÃ§Ã£o para conferir estoque
-// Nova função para conferir estoque somando locação e sublocação
-// FunÃ§Ã£o para conferir estoque
+// Função para conferir estoque
 // Nova função para conferir estoque somando locação e sublocação
 async function conferirEstoqueSoma(itemId, codProduto, somaQuantidades, allInputs) {
 
@@ -797,6 +795,7 @@ async function conferirEstoqueSoma(itemId, codProduto, somaQuantidades, allInput
     // 2. SE ONLINE: Conferir divergência com o servidor
     try {
         console.log('Dispositivo Online: Conferindo estoque...');
+        let conferir = false;
 
         // Fazer GET para conferir estoque
         const response = await makeRequest(`${API_BASE_URL}/estoque/contagem/conferir/${codProduto}?empresa=3`);
@@ -804,7 +803,7 @@ async function conferirEstoqueSoma(itemId, codProduto, somaQuantidades, allInput
         console.log(`Produto ${codProduto} - Quantidade em estoque: ${estoqueReal}`);
 
         // Se a soma for igual ao estoque real, marcar ambos como conferido (conferir: false)
-        let conferir = somaQuantidades !== estoqueReal;
+        conferir = somaQuantidades !== estoqueReal;
 
         // --- ATUALIZAÇÃO LOCAL DO ESTOQUE ---
         // Se a busca online teve sucesso, ATUALIZAMOS o log local com o estoque real recuperado.
@@ -891,6 +890,7 @@ async function conferirEstoqueSoma(itemId, codProduto, somaQuantidades, allInput
     }
 }
 
+window.conferirEstoqueSoma = conferirEstoqueSoma;
 
 // FunÃ§Ã£o para enviar log da contagem (Agora Offline-First)
 async function enviarLogContagem(itemId, estoque) {
