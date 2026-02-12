@@ -518,6 +518,7 @@ async function loadItens() {
         console.log('Searching logs for Contagem Num:', currentContagem.contagem, '(Type:', typeof currentContagem.contagem, ')');
         console.log('Searching logs for Contagem ID:', currentContagem.id, '(Type:', typeof currentContagem.id, ')');
 
+        let logs = [];
         if (currentContagem.contagem) {
             const byNum = await window.localDB.getLogsByContagemNum(currentContagem.contagem);
             console.log('Found by Log Num:', byNum);
