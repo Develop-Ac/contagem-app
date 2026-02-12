@@ -82,8 +82,10 @@ window.handleSalvarContagem = async function handleSalvarContagem() {
     } catch (error) {
         showToast('Erro ao liberar contagem!');
     }
-    // Volta para a listagem de contagens
-    localStorage.removeItem('currentContagem'); // Limpa persistencia
+    // Salva o estado atual da contagem no localStorage
+    if (currentContagem) {
+        localStorage.setItem('currentContagem', JSON.stringify(currentContagem));
+    }
     showContagensScreen();
 };
 // Configuração da API
@@ -122,7 +124,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Ajusta estado inicial da classe do body baseada na tela ativa
     document.body.classList.toggle('login-screen-active', loginScreen.classList.contains('active'));
 
-    // Verificar se jÃ¡ estÃ¡ logado
+    // Verificar se já está logado
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
         currentUser = JSON.parse(savedUser);
@@ -134,6 +136,21 @@ document.addEventListener('DOMContentLoaded', function () {
                 currentContagem = JSON.parse(savedContagem);
                 console.log("Restaurando contagem ativa:", currentContagem.contagem);
                 showItensScreen();
+
+                // Preencher campos com dados salvos
+                setTimeout(() => {
+                    const cards = document.querySelectorAll('.item-card');
+                    if (currentContagem.itens) {
+                        cards.forEach(card => {
+                            const input = card.querySelector('.quantidade-input');
+                            const itemId = card.dataset.itemId;
+                            if (input && currentContagem.itens[itemId]) {
+                                input.value = currentContagem.itens[itemId].quantidade || '';
+                            }
+                        });
+                    }
+                }, 100);
+
             } catch (e) {
                 console.error("Erro ao restaurar contagem:", e);
                 showContagensScreen();
@@ -197,15 +214,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // FunÃ§Ã£o para mostrar toast
 function showToast(message, actionText = '', timeout = 3000) {
-    const snackbar = toast.MaterialSnackbar;
-    const data = {
-        message: message,
-        timeout: timeout
-    };
-    if (actionText) {
-        data.actionText = actionText;
+    if (toast && toast.MaterialSnackbar && typeof toast.MaterialSnackbar.showSnackbar === 'function') {
+        const snackbar = toast.MaterialSnackbar;
+        const data = {
+            message: message,
+            timeout: timeout
+        };
+        if (actionText) {
+            data.actionText = actionText;
+        }
+        snackbar.showSnackbar(data);
+    } else {
+        // Fallback: use alert if snackbar is not available
+        alert(message);
     }
-    snackbar.showSnackbar(data);
 }
 
 // FunÃ§Ã£o para fazer requisiÃ§Ãµes HTTP
@@ -653,6 +675,7 @@ async function toggleItemSave(button) {
     const input = card.querySelector('.quantidade-input');
     if (!input) return;
 
+
     if (button.dataset.mode === 'save') {
         if (!input.value || input.value.trim() === '') {
             showToast('Informe a quantidade antes de salvar');
@@ -679,6 +702,18 @@ async function toggleItemSave(button) {
 
             button.innerHTML = '<i class="material-icons">check</i> Salvo';
             // button.disabled = true; // Mantém desabilitado
+
+            // Salvar no localStorage
+            let savedItens = JSON.parse(localStorage.getItem('itensSalvos') || '[]');
+            // Remove se já existe
+            savedItens = savedItens.filter(i => i.itemId !== itemId);
+            savedItens.push({
+                itemId,
+                codProduto,
+                quantidade: input.value,
+                timestamp: Date.now()
+            });
+            localStorage.setItem('itensSalvos', JSON.stringify(savedItens));
 
             // Move para o final da lista (como já fazia)
             itensList.appendChild(card);
@@ -751,6 +786,7 @@ async function handleQuantidadeChange(input, itemId, codProduto) {
         showToast('Erro ao conferir estoque');
         inputsDoProduto.forEach(inp => {
             inp.classList.remove('conferencia-ok', 'conferencia-divergente');
+<<<<<<< HEAD
             inp.classList.add('conferencia-erro');
             setTimeout(() => {
                 inp.classList.remove('conferencia-erro');
@@ -850,6 +886,8 @@ async function conferirEstoqueSoma(itemId, codProduto, somaQuantidades, allInput
                 conferir: conferir,
                 itemId: itemId
             })
+=======
+>>>>>>> 242165b7df05eb667e4703924561dc2d06a27662
         });
 
         // Atualizar feedback visual Definitivo (Verde/Vermelho)
@@ -871,22 +909,6 @@ async function conferirEstoqueSoma(itemId, codProduto, somaQuantidades, allInput
 
         updateConcluirButtonState();
         updateConcluirButtonState();
-    } catch (error) {
-        console.error("Erro na conferência online:", error);
-
-        // Se falhar a conferência online (mas já salvou local), mantemos como pendente.
-        // Adicionamos à lista de revalidação para tentar de novo ao concluir.
-        if (!window.failedValidationItems) window.failedValidationItems = new Set();
-        window.failedValidationItems.add(itemId);
-
-        showToast("Erro de conexão com ERP. Revalidaremos ao concluir.", "OK", 4000);
-
-        // Marca visualmente como erro/pendente crítico
-        allInputs.forEach(inp => {
-            inp.classList.remove('conferencia-ok', 'conferencia-divergente', 'conferencia-pendente');
-            inp.classList.add('conferencia-erro'); // Vermelho para chamar atenção? Ou amarelo?
-            // Vamos usar erro para indicar que precisa de atenção, mas permitir continuar.
-        });
     }
 }
 
@@ -1063,6 +1085,3 @@ function exportarDados() {
 
     showToast('Dados exportados com sucesso!');
 }
-
-
-
