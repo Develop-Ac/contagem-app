@@ -578,30 +578,34 @@ async function loadItens() {
         // Sticky Data: Buscar TODOS os logs desta contagem (mesmo os sincronizados)
         // Isso garante que o valor local "vença" e permaneça na tela mesmo se a API 
         // ainda não retornou o total atualizado no endpoint da lista.
-        let logs = [];
+        // DEBUG PERSISTENCE
+        console.log('--- loadItens Debug ---');
+        console.log('Current Contagem:', currentContagem);
+        console.log('Searching logs for Contagem Num:', currentContagem.contagem, '(Type:', typeof currentContagem.contagem, ')');
+        console.log('Searching logs for Contagem ID:', currentContagem.id, '(Type:', typeof currentContagem.id, ')');
 
-        // 1. Tentar buscar pelo Número Estável (contagem_num) -> Mais confiável
+        let logs = [];
         if (currentContagem.contagem) {
             const byNum = await window.localDB.getLogsByContagemNum(currentContagem.contagem);
+            console.log('Found by Log Num:', byNum);
             if (byNum && Array.isArray(byNum)) logs = logs.concat(byNum);
         }
 
         // 2. Fallback: buscar por ID original (caso existam logs antigos ou sync via ID)
         if (currentContagem.id) {
             const byId = await window.localDB.getLogsByContagem(currentContagem.id);
+            console.log('Found by Log ID:', byId);
             if (byId && Array.isArray(byId)) logs = logs.concat(byId);
         }
 
         // Se ainda não achou nada (ex: primeira vez), tenta logs pendentes gerais (fallback)
         if (logs.length === 0) {
             const pending = await window.localDB.getPendingLogs();
+            console.log('Found by Pending (Fallback):', pending);
             if (pending && Array.isArray(pending)) logs = pending;
         }
 
-
-        // DEBUG: Mostrar toast com resultado da busca (REMOVIDO PARA DEPLOY)
-        // console.log(`Debug Rehydration: Found ${logs.length} logs. Searched IDs: ${id1} (id) and ${id2} (contagem)`);
-        // showToast(`Busca Local: ID=${id1}/${id2} -> Encontrados: ${logs.length}`);
+        console.log('Total Logs Merged:', logs);
 
         if (logs.length > 0) {
             // Opcional: mostrar aviso discreto
@@ -679,9 +683,17 @@ function renderItens(itens, localState = {}) {
 
         // Card único por item
         const card = document.createElement('div');
-        card.className = `item-card ${hasLocalValue ? 'item-card--saved' : ''}`;
+        const isSaved = hasLocalValue === true; // Garante booleano para facilitar leitura
+
+        card.className = `item-card ${isSaved ? 'item-card--saved' : ''}`;
         card.dataset.itemId = item.id;
         card.style.animationDelay = `${cardIndex * 0.05}s`;
+
+        // Define o estado inicial do botão (Salvar ou Editar)
+        const btnIcon = isSaved ? 'edit' : 'save';
+        const btnText = isSaved ? 'Editar' : 'Salvar';
+        const btnMode = isSaved ? 'edit' : 'save';
+
         card.innerHTML = `
             <div class="item-card__info">
                 <div class="item-card__title">
@@ -690,7 +702,7 @@ function renderItens(itens, localState = {}) {
                 </div>
                 <div class="item-card__meta">
                     <span>Localização: <strong>${item.localizacao || '-'}</strong></span>
-                    ${hasLocalValue ? `<span style="color:green; font-size:10px;">${statusMessage}</span>` : ''}
+                    ${isSaved ? `<span style="color:green; font-size:10px;">${statusMessage}</span>` : ''}
                 </div>
             </div>
             <div class="item-card__actions">
@@ -708,11 +720,11 @@ function renderItens(itens, localState = {}) {
                         data-tipo="locacao"
                         data-identificador-item="${item.identificador_item}"
                         data-tem-aplicacao="${item.tem_aplicacao || false}"
-                        ${hasLocalValue ? 'disabled' : ''}
+                        ${isSaved ? 'disabled' : ''}
                     >
                 </div>
-                <button type="button" class="item-save-btn" data-mode="save" onclick="toggleItemSave(this)">
-                    ${hasLocalValue ? '<i class="material-icons">check</i> Salvo' : '<i class="material-icons">save</i> Salvar'}
+                <button type="button" class="item-save-btn" data-mode="${btnMode}" onclick="toggleItemSave(this)">
+                    <i class="material-icons">${btnIcon}</i> ${btnText}
                 </button>
             </div>
         `;
@@ -741,8 +753,26 @@ async function toggleItemSave(button) {
     const input = card.querySelector('.quantidade-input');
     if (!input) return;
 
+    const currentMode = button.dataset.mode;
 
-    if (button.dataset.mode === 'save') {
+    // --- MODO: EDITAR (Ao clicar em Editar) ---
+    if (currentMode === 'edit') {
+        // Habilita edição
+        input.disabled = false;
+        input.focus();
+
+        // Remove estilo de salvo
+        card.classList.remove('item-card--saved');
+
+        // Muda botão para "Salvar"
+        button.innerHTML = '<i class="material-icons">save</i> Salvar';
+        button.dataset.mode = 'save';
+
+        return;
+    }
+
+    // --- MODO: SALVAR (Ao clicar em Salvar) ---
+    if (currentMode === 'save') {
         if (!input.value || input.value.trim() === '') {
             showToast('Informe a quantidade antes de salvar');
             input.focus();
@@ -762,16 +792,23 @@ async function toggleItemSave(button) {
             // Força a execução da lógica de validação e envio (mesmo se já estava salvo local)
             await handleQuantidadeChange(input, itemId, codProduto);
 
-            // Se chegou aqui sem erro, trava a UI
+            // Se chegou aqui sem erro, significa que salvou e conferiu (ou salvou offline) e não deu erro de API.
+
+            // 1. Trava a UI novamente
             input.disabled = true;
             card.classList.add('item-card--saved');
 
-            button.innerHTML = '<i class="material-icons">check</i> Salvo';
-            // button.disabled = true; // Mantém desabilitado
+            // 2. Muda botão para "Editar" novamente
+            button.innerHTML = '<i class="material-icons">edit</i> Editar';
+            button.dataset.mode = 'edit';
 
-            // Salvar no localStorage
+            // Reabilita o botão (pois agora é um botão de Editar)
+            button.disabled = false;
+
+            // Salvar no localStorage (Fallback extra, já que o main logic usa IndexedDB)
+            // Mantemos isso para compatibilidade se o app usa isso em outro lugar, 
+            // mas o ideal seria centralizar tudo no IndexedDB/localDB.
             let savedItens = JSON.parse(localStorage.getItem('itensSalvos') || '[]');
-            // Remove se já existe
             savedItens = savedItens.filter(i => i.itemId !== itemId);
             savedItens.push({
                 itemId,
@@ -781,8 +818,9 @@ async function toggleItemSave(button) {
             });
             localStorage.setItem('itensSalvos', JSON.stringify(savedItens));
 
-            // Move para o final da lista (como já fazia)
-            itensList.appendChild(card);
+            // Move para o final da lista? O usuário pediu para editar, se movermos pode perder o foco visual.
+            // Vou comentar a linha que move para o final, para manter a consistência visual onde o usuário estava.
+            // itensList.appendChild(card); 
 
         } catch (error) {
             console.error('Erro ao salvar item:', error);
@@ -852,6 +890,106 @@ async function handleQuantidadeChange(input, itemId, codProduto) {
         showToast('Erro ao conferir estoque');
         inputsDoProduto.forEach(inp => {
             inp.classList.remove('conferencia-ok', 'conferencia-divergente');
+
+            inp.classList.add('conferencia-erro');
+            setTimeout(() => {
+                inp.classList.remove('conferencia-erro');
+            }, 3000);
+        });
+    }
+}
+
+// Função para conferir estoque
+// Nova função para conferir estoque somando locação e sublocação
+async function conferirEstoqueSoma(itemId, codProduto, somaQuantidades, allInputs) {
+
+    // 1. SALVAR LOCALMENTE PRIMEIRO (Offline-First)
+    // Marca visualmente como Pendente/Salvo Local enquanto processa
+    allInputs.forEach(inp => {
+        inp.classList.remove('conferencia-ok', 'conferencia-divergente', 'conferencia-erro');
+        inp.classList.add('conferencia-pendente');
+        inp.dataset.temDivergencia = 'false';
+    });
+
+    try {
+        // Salva no IndexedDB imediatamente com estoque 0 (será atualizado ou ignorado pelo backend na validação)
+        // O importante é garantir que o "contado" (somaQuantidades) esteja salvo.
+        // Nota: enviarLogContagem já chama o syncManager.triggerSync() se estiver online.
+        await enviarLogContagem(itemId, 0);
+    } catch (e) {
+        console.error("Erro ao salvar localmente:", e);
+        showToast("Erro ao salvar dados no dispositivo!");
+        return; // Se não salvou local, nem tenta rede.
+    }
+
+    const isOnline = navigator.onLine;
+
+    // Se estiver offline, paramos por aqui (já salvou e marcou pendente/amarelo)
+    if (!isOnline) {
+        console.log('Dispositivo Offline: Dados salvos localmente.');
+        showToast('Salvo offline. Será sincronizado quando retomar conexão.');
+        updateConcluirButtonState();
+        return;
+    }
+
+    // 2. SE ONLINE: Conferir divergência com o servidor
+    try {
+        console.log('Dispositivo Online: Conferindo estoque...');
+        let conferir = false;
+
+        // Fazer GET para conferir estoque
+        const response = await makeRequest(`${API_BASE_URL}/estoque/contagem/conferir/${codProduto}?empresa=3`);
+        const estoqueReal = response.ESTOQUE;
+        console.log(`Produto ${codProduto} - Quantidade em estoque: ${estoqueReal}`);
+
+        // Se a soma for igual ao estoque real, marcar ambos como conferido (conferir: false)
+        conferir = somaQuantidades !== estoqueReal;
+
+        // --- ATUALIZAÇÃO LOCAL DO ESTOQUE ---
+        // Se a busca online teve sucesso, ATUALIZAMOS o log local com o estoque real recuperado.
+        // Isso garante que o dispositivo fique com o dado mais quente possível.
+        try {
+            // Recriar o objeto logData para atualizar apenas o estoque
+            // Precisamos do ID do user e contagem, que estão globais
+            const identificadorItem = allInputs[0].dataset.identificadorItem;
+            if (identificadorItem) {
+                // Atualiza logs locais que batem com esse identificador
+                await window.localDB.updateEstoqueByItem(identificadorItem, estoqueReal);
+                console.log(`[FRONT] Estoque local atualizado para ${estoqueReal} (Item ${identificadorItem})`);
+            }
+        } catch (dbError) {
+            console.warn("[FRONT] Falha ao atualizar estoque local:", dbError);
+        }
+
+        const input = document.querySelector(`.quantidade-input[data-item-id='${itemId}']`);
+        const temAplicacao = input && input.dataset.temAplicacao === 'true';
+
+        if (temAplicacao) {
+            console.log(`Produto ${codProduto} - Item com aplicação: Marcando como conferido (conferir: false) para aguardar segunda contagem.`);
+            conferir = false;
+        }
+
+        console.log(`Produto ${codProduto} - Conferir final: ${conferir} (Estoque: ${estoqueReal}, Contado: ${somaQuantidades}) {itemId: ${itemId}}`);
+
+        // Atualizar o item de contagem
+        let identificadorItem = null;
+        if (currentContagem && Array.isArray(currentContagem.itens)) {
+            const itemObj = currentContagem.itens.find(it => it.id === itemId);
+            if (itemObj && itemObj.identificador_item) {
+                identificadorItem = itemObj.identificador_item;
+            }
+        }
+        if (!identificadorItem) {
+            throw new Error('identificador_item não encontrado para o item');
+        }
+
+        // UPDATE no servidor para marcar se está conferido ou não
+        await makeRequest(`${API_BASE_URL}/estoque/contagem/item/${identificadorItem}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                conferir: conferir,
+                itemId: itemId
+            })
         });
 
         // Atualizar feedback visual Definitivo (Verde/Vermelho)
@@ -872,10 +1010,17 @@ async function handleQuantidadeChange(input, itemId, codProduto) {
         });
 
         updateConcluirButtonState();
-        updateConcluirButtonState();
+    } catch (error) {
+        console.error('Erro na conferência online:', error);
+        // Remove estado de pendente antes de lançar o erro para o caller tratar
+        if (allInputs) {
+            allInputs.forEach(inp => inp.classList.remove('conferencia-pendente'));
+        }
+        throw error;
     }
 }
 
+window.conferirEstoqueSoma = conferirEstoqueSoma;
 
 // FunÃ§Ã£o para enviar log da contagem (Agora Offline-First)
 async function enviarLogContagem(itemId, estoque) {

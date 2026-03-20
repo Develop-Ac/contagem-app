@@ -59,6 +59,7 @@ body {
     background: var(--grey-50);
     min-height: 100vh;
     color: var(--grey-700);
+    overscroll-behavior-y: contain;
 }
 
 /* Foco global para acessibilidade e usabilidade */
