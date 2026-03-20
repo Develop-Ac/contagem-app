@@ -79,6 +79,8 @@ window.handleSalvarContagem = async function handleSalvarContagem() {
         console.log("Limpando cache local para contagem:", currentContagem.contagem);
         await window.localDB.clearLogsByContagem(currentContagem.contagem);
 
+        await limparTudo(); // Limpeza completa para garantir que não reste nada da contagem anterior
+
     } catch (error) {
         showToast('Erro ao liberar contagem!');
     }
@@ -88,6 +90,70 @@ window.handleSalvarContagem = async function handleSalvarContagem() {
     }
     showContagensScreen();
 };
+
+async function limparTudo() {
+  try {
+    console.log("🧹 Iniciando limpeza completa...");
+
+    // =========================
+    // 1. LOCAL STORAGE
+    // =========================
+    localStorage.clear();
+    console.log("✅ localStorage limpo");
+
+    // =========================
+    // 2. SESSION STORAGE
+    // =========================
+    sessionStorage.clear();
+    console.log("✅ sessionStorage limpo");
+
+    // =========================
+    // 3. COOKIES
+    // =========================
+    document.cookie.split(";").forEach(cookie => {
+      const nome = cookie.split("=")[0].trim();
+
+      // Remove para todos os paths possíveis
+      document.cookie = `${nome}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/`;
+      document.cookie = `${nome}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;domain=${location.hostname}`;
+    });
+
+    console.log("✅ Cookies limpos");
+
+    // =========================
+    // 4. INDEXED DB
+    // =========================
+    if (window.indexedDB && indexedDB.databases) {
+      const dbs = await indexedDB.databases();
+
+      for (const db of dbs) {
+        if (db.name) {
+          indexedDB.deleteDatabase(db.name);
+          console.log(`🗑️ IndexedDB deletado: ${db.name}`);
+        }
+      }
+    } else {
+      console.warn("⚠️ indexedDB.databases() não suportado neste navegador");
+    }
+
+    // =========================
+    // 5. CACHE API (Service Worker)
+    // =========================
+    if ("caches" in window) {
+      const keys = await caches.keys();
+
+      for (const key of keys) {
+        await caches.delete(key);
+        console.log(`🗑️ Cache deletado: ${key}`);
+      }
+    }
+
+    console.log("🔥 LIMPEZA COMPLETA FINALIZADA!");
+
+  } catch (err) {
+    console.error("❌ Erro ao limpar:", err);
+  }
+}
 // Configuração da API
 const hostname = window.location.hostname;
 const protocol = window.location.protocol;
