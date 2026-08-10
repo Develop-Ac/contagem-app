@@ -1,0 +1,1148 @@
+/* =============================================================================
+   Sistema de Contagem - Folha de estilos da aplicação
+   =============================================================================
+
+   Organização (mantenha esta ordem ao editar):
+     1.  Tokens de design
+     2.  Reset e base
+     3.  Layout e cabeçalho
+     4.  Sistema de telas
+     5.  Tela de login
+     6.  Cabeçalho de página
+     7.  Cartões de contagem
+     8.  Cartões de item
+     9.  Estados vazios
+     10. Campos e feedback de conferência
+     11. Botões
+     12. Indicadores (spinner, snackbar, sincronização)
+     13. Modal
+     14. Animações
+     15. Responsividade
+
+   Convenções:
+     - cores, espaçamentos e sombras vêm sempre dos tokens do bloco 1;
+     - blocos seguem BEM simplificado (`.item-card__title`, `.item-card--saved`).
+   ========================================================================== */
+
+
+/* =============================================================================
+   1. TOKENS DE DESIGN
+   ========================================================================== */
+:root {
+    /* --- Identidade visual --- */
+    --primary-color: #3067C5;
+    --primary-dark: #2856b3;
+    --secondary-color: #B6C947;
+    --gradient-brand: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+
+    /* --- Neutros --- */
+    --white: #ffffff;
+    --grey-50: #f8f9fa;
+    /* fundo da página */
+    --grey-100: #f1f3f5;
+    --grey-200: #e9ecef;
+    /* bordas suaves */
+    --grey-300: #dee2e6;
+    --grey-500: #868e96;
+    /* texto secundário */
+    --grey-600: #6c757d;
+    --grey-700: #495057;
+    /* texto principal */
+    --grey-900: #212529;
+    /* títulos */
+
+    /* --- Feedback --- */
+    --success-color: #4caf50;
+    --success-dark: #43a047;
+    --success-light: #e8f5e8;
+    --warning-color: #ff9800;
+    --warning-light: #fff3e0;
+    --error-color: #f44336;
+    --error-dark: #d32f2f;
+    --error-light: #ffebee;
+    --info-light: rgba(48, 103, 197, 0.1);
+
+    /* --- Acessibilidade --- */
+    --focus-ring: 0 0 0 3px rgba(48, 103, 197, 0.4);
+
+    /* --- Formas e movimento --- */
+    --base-font: 'Roboto', Arial, sans-serif;
+    --border-radius-sm: 6px;
+    --border-radius-md: 12px;
+    --border-radius-pill: 20px;
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+    --transition-base: all 0.25s ease-out;
+
+    /* Altura do cabeçalho fixo, usada no cálculo da altura das telas. */
+    --header-height: 64px;
+}
+
+
+/* =============================================================================
+   2. RESET E BASE
+   ========================================================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+}
+
+body {
+    font-family: var(--base-font);
+    background: var(--grey-50);
+    min-height: 100vh;
+    color: var(--grey-700);
+    /* Impede o "puxar para atualizar" do navegador durante a contagem. */
+    overscroll-behavior-y: contain;
+}
+
+button,
+input {
+    font-family: inherit;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 500;
+}
+
+:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+
+/* =============================================================================
+   3. LAYOUT E CABEÇALHO
+   ========================================================================== */
+.app-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    min-height: var(--header-height);
+    background: var(--gradient-brand);
+    box-shadow: var(--shadow-sm);
+}
+
+.app-header__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0 12px;
+}
+
+.app-header__title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 26px;
+    font-weight: 500;
+    color: var(--white);
+}
+
+.app-content {
+    background: transparent;
+    padding: 0;
+}
+
+.header-logo {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.header-logout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: var(--border-radius-md);
+    background: var(--primary-color);
+    color: var(--white);
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-base);
+}
+
+.header-logout .material-icons {
+    color: var(--white);
+}
+
+.header-logout:hover {
+    background: var(--primary-dark);
+    box-shadow: var(--shadow-md);
+}
+
+.header-logout:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring), var(--shadow-md);
+}
+
+
+/* =============================================================================
+   4. SISTEMA DE TELAS
+   Cada rota renderiza uma `.screen`; a animação de entrada é a mesma do
+   aplicativo original, quando as telas eram alternadas por classe.
+   ========================================================================== */
+.screen {
+    min-height: calc(100vh - var(--header-height));
+    padding: 24px;
+    animation: fadeInUp 0.5s ease-out;
+}
+
+.content-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px;
+}
+
+/* Na tela de login o cabeçalho da aplicação não é renderizado. */
+.screen--login {
+    min-height: 100vh;
+    padding: 0;
+}
+
+
+/* =============================================================================
+   5. TELA DE LOGIN
+   ========================================================================== */
+.login-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 32px 24px;
+}
+
+.login-shell {
+    display: flex;
+    width: 100%;
+    max-width: 980px;
+    min-height: 520px;
+    background: var(--white);
+    border: 1px solid var(--grey-200);
+    border-radius: var(--border-radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    animation: slideInUp 0.6s ease-out;
+}
+
+.login-panel {
+    flex: 1;
+    display: flex;
+}
+
+.login-panel__brand {
+    align-items: center;
+    justify-content: center;
+    padding: 48px 32px;
+    background: var(--gradient-brand);
+    color: var(--white);
+}
+
+.login-panel__form {
+    align-items: center;
+    justify-content: center;
+    padding: 48px 40px;
+    background: var(--white);
+}
+
+.brand-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    max-width: 320px;
+    text-align: center;
+}
+
+.brand-content h2 {
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.brand-text {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.login-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 190px;
+    max-width: 65%;
+}
+
+.login-logo img {
+    display: block;
+    width: 100%;
+    height: auto;
+    filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.25));
+}
+
+.login-logo--mobile {
+    display: none;
+    width: 180px;
+    max-width: 70%;
+    margin: 0 auto 12px;
+}
+
+.login-panel__form .login-logo img {
+    filter: none;
+}
+
+.form-content {
+    width: 100%;
+    max-width: 360px;
+}
+
+.form-content h4 {
+    margin-bottom: 4px;
+    font-size: 24px;
+    color: var(--primary-color);
+    text-align: center;
+}
+
+.form-subtitle {
+    margin-bottom: 24px;
+    color: var(--grey-500);
+    text-align: center;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.login-input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid var(--grey-200);
+    border-radius: 16px;
+    font-size: 16px;
+    background: var(--white);
+    color: var(--grey-900);
+    transition: var(--transition-base);
+}
+
+.login-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: var(--focus-ring);
+}
+
+/* Exibido apenas durante a autenticação. */
+.login-spinner {
+    margin: 8px auto 0;
+}
+
+
+/* =============================================================================
+   6. CABEÇALHO DE PÁGINA
+   ========================================================================== */
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--grey-200);
+}
+
+.page-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--grey-900);
+}
+
+.page-title .material-icons {
+    font-size: 32px;
+    color: var(--primary-color);
+}
+
+.user-greeting {
+    margin: 12px 0 4px;
+    font-size: 16px;
+    color: var(--grey-900);
+}
+
+.contagem-heading {
+    margin: 8px 0 12px;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--grey-900);
+    text-align: center;
+}
+
+
+/* =============================================================================
+   7. CARTÕES DE CONTAGEM (tela "Minhas Tarefas")
+   ========================================================================== */
+.contagens-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.contagem-card {
+    background: var(--white);
+    border: 1px solid var(--grey-200);
+    border-radius: var(--border-radius-md);
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-base);
+    animation: fadeInUp 0.5s ease-out;
+}
+
+.contagem-card:hover,
+.contagem-card:focus-visible {
+    transform: translateY(-4px);
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-lg);
+}
+
+.contagem-card:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring), var(--shadow-lg);
+}
+
+.contagem-card__title {
+    background: none;
+    padding: 20px;
+    border-bottom: 1px solid var(--grey-100);
+    color: var(--grey-900);
+}
+
+.contagem-card__title-text {
+    font-size: 20px;
+    font-weight: 500;
+}
+
+.contagem-card__body {
+    padding: 20px;
+}
+
+.contagem-info {
+    margin-bottom: 8px;
+    font-size: 15px;
+}
+
+.contagem-info strong {
+    color: var(--primary-color);
+}
+
+.contagem-date {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    color: var(--grey-500);
+}
+
+.contagem-date .material-icons {
+    font-size: 16px;
+}
+
+
+/* =============================================================================
+   8. CARTÕES DE ITEM (tela de conferência)
+   ========================================================================== */
+.itens-card-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.item-card {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    min-height: 170px;
+    padding: 18px 20px;
+    background: var(--white);
+    border: 1px solid var(--grey-200);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-sm);
+    animation: fadeInUp 0.3s ease-out;
+}
+
+.item-card__info {
+    flex: 1;
+}
+
+.item-card__title {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--grey-900);
+}
+
+.item-card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 6px;
+    font-size: 14px;
+    color: var(--grey-500);
+}
+
+.item-card__meta strong {
+    color: var(--grey-900);
+}
+
+.item-card__badge {
+    padding: 2px 8px;
+    border-radius: var(--border-radius-pill);
+    background: var(--success-light);
+    color: var(--success-dark);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.item-card__actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.item-code {
+    color: var(--primary-color);
+}
+
+.item-desc {
+    flex: 1;
+    min-width: 180px;
+}
+
+/* Item já registrado no dispositivo: campo travado até acionar "Editar". */
+.item-card--saved {
+    background: var(--grey-100);
+    border-color: var(--grey-200);
+}
+
+.item-card--saved .item-desc {
+    color: var(--grey-500);
+}
+
+.item-card--saved .item-save-btn {
+    background: var(--grey-200);
+    color: var(--grey-700);
+}
+
+.quantity-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.quantity-wrapper label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--grey-900);
+}
+
+
+/* =============================================================================
+   9. ESTADOS VAZIOS
+   ========================================================================== */
+.empty-state {
+    grid-column: 1 / -1;
+    padding: 40px 32px;
+    background: var(--white);
+    border: 1px dashed var(--grey-300);
+    border-radius: var(--border-radius-md);
+    text-align: center;
+    color: var(--grey-600);
+}
+
+.empty-state i {
+    display: block;
+    margin-bottom: 12px;
+    font-size: 48px;
+    color: var(--grey-500);
+}
+
+.empty-state h4 {
+    margin-bottom: 8px;
+    color: var(--grey-900);
+}
+
+.empty-state--success i {
+    color: var(--success-color);
+}
+
+.empty-state--alert i {
+    color: var(--error-color);
+}
+
+
+/* =============================================================================
+   10. CAMPOS E FEEDBACK DE CONFERÊNCIA
+   As classes `conferencia-*` são aplicadas por `useItensConferencia`.
+   ========================================================================== */
+.quantidade-input {
+    width: 90px;
+    padding: 8px;
+    border: 2px solid var(--grey-300);
+    border-radius: var(--border-radius-sm);
+    background: var(--grey-50);
+    font-size: 20px;
+    font-weight: 600;
+    text-align: center;
+    color: var(--grey-900);
+    transition: var(--transition-base);
+}
+
+.quantidade-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    background: var(--white);
+    box-shadow: var(--focus-ring);
+}
+
+/* Conferido: a soma bate com o estoque do sistema. */
+.quantidade-input.conferencia-ok {
+    border-color: var(--success-color);
+    background-color: var(--success-light);
+    color: var(--success-color);
+}
+
+/* Conferido: divergência em relação ao sistema. */
+.quantidade-input.conferencia-divergente {
+    border-color: var(--warning-color);
+    background-color: var(--warning-light);
+    color: var(--warning-color);
+}
+
+/* Falha ao gravar no dispositivo: o dado pode ser perdido. */
+.quantidade-input.conferencia-erro {
+    border-color: var(--error-color);
+    background-color: var(--error-light);
+    color: var(--error-color);
+}
+
+/* Salvo no dispositivo, aguardando conferência no servidor. */
+.quantidade-input.conferencia-pendente {
+    border-color: var(--primary-color);
+    background-color: var(--info-light);
+    color: var(--primary-color);
+}
+
+
+/* =============================================================================
+   11. BOTÕES
+   ========================================================================== */
+.login-button {
+    width: 100%;
+    margin-top: 8px;
+    padding: 14px 16px;
+    border: none;
+    border-radius: 16px;
+    background: var(--primary-color);
+    color: var(--white);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(48, 103, 197, 0.3);
+    transition: var(--transition-base);
+}
+
+.login-button:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 26px rgba(48, 103, 197, 0.35);
+}
+
+.login-button:focus-visible {
+    box-shadow: var(--focus-ring), 0 10px 26px rgba(48, 103, 197, 0.35);
+}
+
+.login-button:disabled {
+    background: var(--grey-200);
+    color: var(--grey-500);
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.item-save-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: var(--border-radius-md);
+    background: var(--primary-color);
+    color: var(--white);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-base);
+}
+
+.item-save-btn i {
+    font-size: 18px;
+}
+
+.item-save-btn:hover {
+    background: var(--primary-dark);
+}
+
+.item-save-btn:disabled {
+    opacity: 0.7;
+    cursor: progress;
+}
+
+.save-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.primary-save-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 28px;
+    border: none;
+    border-radius: var(--border-radius-md);
+    background: var(--success-color);
+    color: var(--white);
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-base);
+}
+
+.primary-save-btn i {
+    font-size: 20px;
+}
+
+.primary-save-btn:hover:not(:disabled) {
+    background: var(--success-dark);
+    box-shadow: var(--shadow-md);
+}
+
+.primary-save-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* Botão de ícone (usado no "voltar" da tela de conferência). */
+.icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--grey-700);
+    cursor: pointer;
+    transition: var(--transition-base);
+}
+
+.icon-button:hover {
+    background: var(--grey-200);
+}
+
+
+/* =============================================================================
+   12. INDICADORES (spinner, snackbar, sincronização)
+   ========================================================================== */
+.loading-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+}
+
+.spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid var(--grey-200);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.snackbar {
+    position: fixed;
+    left: 50%;
+    bottom: 0;
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-width: 288px;
+    max-width: 568px;
+    padding: 14px 24px;
+    background: var(--grey-900);
+    border-radius: var(--border-radius-sm);
+    color: var(--white);
+    font-size: 14px;
+    box-shadow: var(--shadow-lg);
+    transform: translate(-50%, 120%);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 1, 1);
+    pointer-events: none;
+}
+
+.snackbar--active {
+    transform: translate(-50%, -24px);
+    pointer-events: auto;
+}
+
+.snackbar__text {
+    flex: 1;
+}
+
+.snackbar__action {
+    border: none;
+    background: transparent;
+    color: var(--secondary-color);
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+/*
+   Selo de conexão/sincronização. O modificador determina apenas a cor.
+*/
+.sync-status {
+    display: flex;
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 1000;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 15px;
+    border-radius: var(--border-radius-pill);
+    background-color: var(--grey-900);
+    color: var(--white);
+    font-size: 14px;
+    box-shadow: var(--shadow-md);
+    transition: var(--transition-base);
+}
+
+.sync-status .material-icons {
+    font-size: 18px;
+}
+
+.sync-status--online {
+    background-color: var(--success-color);
+}
+
+.sync-status--offline {
+    background-color: var(--error-color);
+}
+
+.sync-status--syncing {
+    background-color: var(--primary-color);
+}
+
+.sync-status--pending {
+    background-color: var(--warning-color);
+}
+
+
+/* =============================================================================
+   13. MODAL
+   ========================================================================== */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-overlay--visible {
+    display: flex;
+}
+
+.modal-box {
+    width: 100%;
+    max-width: 360px;
+    padding: 32px 24px;
+    background: var(--white);
+    border-radius: var(--border-radius-md);
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+}
+
+.modal-box h4 {
+    margin-bottom: 8px;
+    color: var(--grey-900);
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.modal-button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    color: var(--white);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-base);
+}
+
+.modal-button--danger {
+    background: var(--error-dark);
+}
+
+.modal-button--neutral {
+    background: var(--grey-600);
+}
+
+.modal-button:hover {
+    filter: brightness(1.1);
+}
+
+
+/* =============================================================================
+   14. ANIMAÇÕES
+   ========================================================================== */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Respeita quem configurou o sistema para reduzir animações. */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+
+/* =============================================================================
+   15. RESPONSIVIDADE
+   ========================================================================== */
+@media (max-width: 992px) {
+    .itens-card-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .screen {
+        padding: 16px;
+    }
+
+    .screen--login {
+        padding: 0;
+    }
+
+    .content-container {
+        padding: 0 8px;
+    }
+
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .contagens-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin: 0 -8px;
+    }
+
+    .contagem-card {
+        width: 100%;
+        min-height: 200px;
+    }
+
+    .itens-card-list {
+        grid-template-columns: 1fr;
+    }
+
+    .item-card {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .item-card__actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .quantity-wrapper {
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .save-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .primary-save-btn {
+        justify-content: center;
+    }
+
+    .login-container {
+        /* Alinhado ao topo para não ficar sob o teclado virtual. */
+        align-items: flex-start;
+        padding: 16px;
+    }
+
+    .login-shell {
+        flex-direction: column;
+        min-height: auto;
+    }
+
+    .login-panel__brand {
+        display: none;
+    }
+
+    .login-panel__form {
+        padding: 32px 20px;
+    }
+
+    .login-logo--mobile {
+        display: flex;
+        width: 170px;
+    }
+}
+
+@media (max-width: 480px) {
+    .screen {
+        padding: 12px;
+    }
+
+    .screen--login {
+        padding: 0;
+    }
+
+    .page-title {
+        font-size: 20px;
+    }
+
+    .page-title .material-icons {
+        font-size: 24px;
+    }
+
+    .contagens-grid {
+        margin: 0 -12px;
+    }
+
+    .contagem-card {
+        min-height: 220px;
+    }
+
+    .contagem-card__title,
+    .contagem-card__body {
+        padding: 16px;
+    }
+
+    .item-card__actions {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .quantity-wrapper {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .login-panel__form {
+        padding: 24px 16px;
+    }
+}

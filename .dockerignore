@@ -1,0 +1,40 @@
+# Reinstalado dentro da imagem a partir do lockfile.
+node_modules
+.pnp
+.pnp.js
+
+# Artefatos de build locais — a imagem gera os seus.
+.next
+out
+build
+*.tsbuildinfo
+
+# Arquivos de ambiente NUNCA entram na imagem: o endereço da API vem do
+# build arg `NEXT_PUBLIC_API_BASE_URL`, e um `.env.local` copiado por engano
+# apontaria a produção para o backend da máquina de quem construiu.
+.env
+.env.*
+!.env.example
+
+# Controle de versão e ferramentas
+.git
+.gitignore
+.claude
+.vscode
+.idea
+
+# Documentação e metadados
+README.md
+AGENTS.md
+CLAUDE.md
+Dockerfile
+.dockerignore
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Logs
+npm-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
