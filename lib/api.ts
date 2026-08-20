@@ -11,7 +11,7 @@
  */
 import { config } from './config';
 import { http } from './http';
-import type { Contagem, LoginResponse } from './types';
+import type { Contagem, LogContagemServidor, LoginResponse } from './types';
 
 /**
  * Monta uma URL absoluta a partir de um caminho relativo da API.
@@ -64,6 +64,18 @@ export const api = {
     consultarEstoque(codProduto: string | number) {
         return http.get<{ ESTOQUE: number }>(
             url(`/estoque/contagem/conferir/${codProduto}?empresa=${config.EMPRESA_ID}`),
+        );
+    },
+
+    /**
+     * Lista os logs já registrados no servidor para uma contagem.
+     *
+     * É o que permite continuar uma contagem em outro dispositivo (ou outro
+     * dia): o que já foi contado e sincronizado volta preenchido.
+     */
+    listarLogsContagem(contagemId: string | number) {
+        return http.get<{ logs: LogContagemServidor[] }>(
+            url(`/estoque/contagem/logs/${contagemId}`),
         );
     },
 

@@ -26,7 +26,7 @@
  */
 
 /** Precisa ser incrementado a cada publicação. */
-const CACHE_VERSION = 'v2.1.0';
+const CACHE_VERSION = 'v2.2.0';
 const CACHE_NAME = `contagem-app-${CACHE_VERSION}`;
 
 /** Rotas mínimas para abrir o aplicativo sem rede. */

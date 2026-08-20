@@ -38,7 +38,7 @@ import { format } from '@/lib/format';
 import { extrairPrateleira, OPCOES_PISO, pertenceAoPiso } from '@/lib/locacao';
 import { createLogger } from '@/lib/logger';
 import { sync } from '@/lib/sync';
-import type { Contagem, ContagemLog, ItemContagem } from '@/lib/types';
+import type { Contagem, ContagemLog, ItemContagem, LogContagemServidor } from '@/lib/types';
 import { useSession } from './useSession';
 import { useToast } from './useToast';
 
@@ -75,6 +75,11 @@ export interface EstadoItem {
     bloqueado: boolean;
     /** Gravação em andamento. */
     salvando: boolean;
+    /**
+     * Quantidade veio do SERVIDOR (contada em outro dispositivo ou sessão),
+     * sem log local correspondente neste aparelho.
+     */
+    remoto: boolean;
 }
 
 /** Opção de piso disponível para o filtro da conferência. */
@@ -279,28 +284,48 @@ export function useItensConferencia(
     // ----------------------------------------------------------------------
 
     /**
-     * Carrega os dados locais da contagem, reidratando o que já foi digitado.
+     * Carrega os dados da contagem, reidratando o que já foi contado.
+     *
+     * Duas fontes, mescladas por item:
+     * - logs LOCAIS (IndexedDB): o que este aparelho digitou;
+     * - logs do SERVIDOR: o que qualquer aparelho já sincronizou — é o que
+     *   permite continuar a contagem em outro celular ou em outro dia.
+     *
+     * Regra de conflito: log local ainda NÃO sincronizado vence (é a intenção
+     * mais recente deste aparelho e vai sobrescrever o servidor na próxima
+     * sincronização); nos demais casos o servidor vence, porque enxerga todos
+     * os dispositivos.
      */
     useEffect(() => {
         if (!contagem) return;
 
         let ativo = true;
 
-        const montarEstados = (logsPorItem: Record<string, ContagemLog>) => {
+        const montarEstados = (
+            logsPorItem: Record<string, ContagemLog>,
+            logsServidor: Record<string, LogContagemServidor>,
+        ) => {
             const proximos: Record<string, EstadoItem> = {};
 
             itens.forEach((item) => {
-                const logLocal = logsPorItem[String(item.id)] || null;
-                const salvo = Boolean(logLocal);
+                const key = String(item.id);
+                const logLocal = logsPorItem[key] || null;
+                const logRemoto = logsServidor[key] || null;
 
-                proximos[String(item.id)] = {
-                    valor: salvo ? String(logLocal!.contado) : '',
+                const usarRemoto = Boolean(logRemoto) && !(logLocal && logLocal.synced === 0);
+                const salvo = Boolean(logLocal || logRemoto);
+
+                proximos[key] = {
+                    valor: usarRemoto
+                        ? String(logRemoto!.contado)
+                        : logLocal ? String(logLocal.contado) : '',
                     salvo,
                     divergente: false,
                     conferidoOnline: false,
                     feedback: salvo ? FEEDBACK.PENDENTE : null,
                     bloqueado: salvo,
                     salvando: false,
+                    remoto: Boolean(usarRemoto && !logLocal),
                 };
             });
 
@@ -311,6 +336,9 @@ export function useItensConferencia(
             setLoading(true);
             paraRevalidarRef.current.clear();
 
+            let logsPorItem: Record<string, ContagemLog> = {};
+            let logsServidor: Record<string, LogContagemServidor> = {};
+
             try {
                 const logs = await getDatabase().getLogsByContagem({
                     contagemNum: contagem.contagem,
@@ -320,17 +348,40 @@ export function useItensConferencia(
                 if (!ativo) return;
 
                 // Os logs já vêm ordenados por data: o último de cada item vence.
-                const logsPorItem: Record<string, ContagemLog> = {};
                 logs.forEach((entry) => { logsPorItem[String(entry.item_id)] = entry; });
-
                 log.debug(`${logs.length} log(s) local(is) recuperado(s).`);
-                montarEstados(logsPorItem);
             } catch (error) {
                 log.error('Falha ao recuperar os dados locais da contagem.', error);
-                if (ativo) montarEstados({});
-            } finally {
-                if (ativo) setLoading(false);
+                logsPorItem = {};
             }
+
+            // Sem conexão a fonte local basta; a busca no servidor é um extra que
+            // nunca pode impedir a tela de abrir.
+            if (navigator.onLine) {
+                try {
+                    const resposta = await api.listarLogsContagem(contagem.id);
+                    if (!ativo) return;
+
+                    const lista = Array.isArray(resposta?.logs) ? resposta.logs : [];
+                    // Um item pode ter mais de um log (um por usuário); o mais
+                    // recente vence.
+                    lista.forEach((entry) => {
+                        const key = String(entry.item_id);
+                        const atual = logsServidor[key];
+                        if (!atual || String(entry.created_at) > String(atual.created_at)) {
+                            logsServidor[key] = entry;
+                        }
+                    });
+                    log.debug(`${lista.length} log(s) do servidor recuperado(s).`);
+                } catch (error) {
+                    log.warn('Falha ao buscar os logs do servidor; usando apenas os locais.', error);
+                    logsServidor = {};
+                }
+            }
+
+            if (!ativo) return;
+            montarEstados(logsPorItem, logsServidor);
+            setLoading(false);
         };
 
         carregar();
@@ -438,7 +489,7 @@ export function useItensConferencia(
             return false;
         }
 
-        alterarEstado(item.id, { salvo: true });
+        alterarEstado(item.id, { salvo: true, remoto: false });
 
         // 2. Sem conexão: fica na fila e será revalidado na conclusão.
         if (!navigator.onLine) {

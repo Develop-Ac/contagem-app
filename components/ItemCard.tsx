@@ -44,7 +44,11 @@ export function ItemCard({
                 </div>
                 <div className="item-card__meta">
                     <span>Localização: <strong>{item.localizacao || '-'}</strong></span>
-                    {estado.salvo && <span className="item-card__badge">Salvo no dispositivo</span>}
+                    {estado.salvo && (
+                        <span className="item-card__badge">
+                            {estado.remoto ? 'Contado em outro dispositivo' : 'Salvo no dispositivo'}
+                        </span>
+                    )}
                 </div>
             </div>
 

@@ -66,6 +66,18 @@ export interface Contagem {
     itens?: ItemContagem[];
 }
 
+/** Log de contagem como registrado no servidor (`GET /logs/:contagem_id`). */
+export interface LogContagemServidor {
+    id: string;
+    contagem_id: string;
+    usuario_id: string;
+    /** Item conferido (id do `est_contagem_itens`). */
+    item_id: string;
+    estoque: number;
+    contado: number;
+    created_at: string;
+}
+
 /** Registro da fila offline gravado no IndexedDB. */
 export interface ContagemLog {
     /** Chave primária autoincremental (gerada pelo Dexie). */
