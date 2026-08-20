@@ -61,7 +61,7 @@ function detectEnvironment(): Environment {
  */
 export const config = {
     /** Versão da aplicação. Usada no cache do Service Worker. */
-    VERSION: '2.0.0',
+    VERSION: '2.1.0',
 
     /** Ambiente detectado: `'development'` ou `'production'`. */
     get ENVIRONMENT(): Environment {

@@ -54,6 +54,8 @@ export interface Contagem {
     contagem: number;
     /** Piso/setor do estoque. */
     piso: string;
+    /** Tipo da contagem: `1` = Diária/Rotativa, `2` = Avulsa. */
+    tipo?: number;
     /** `true` quando disponível ao conferente. */
     liberado_contagem: boolean;
     /** Data de criação (ISO). */

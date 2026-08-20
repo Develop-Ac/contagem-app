@@ -410,6 +410,43 @@ h1, h2, h3, h4, h5, h6 {
     text-align: center;
 }
 
+/* Filtro de piso/prateleira da conferência (contagem avulsa). */
+.itens-filtros {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.itens-filtros__campo {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.itens-filtros__campo label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--grey-600);
+}
+
+.itens-filtros__campo select {
+    min-height: 44px;
+    padding: 0 12px;
+    font-family: inherit;
+    font-size: 16px;
+    color: var(--grey-700);
+    background: var(--white);
+    border: 1px solid var(--grey-300);
+    border-radius: var(--border-radius-sm);
+    transition: var(--transition-base);
+}
+
+.itens-filtros__campo select:disabled {
+    background: var(--grey-100);
+    color: var(--grey-500);
+}
+
 
 /* =============================================================================
    7. CARTÕES DE CONTAGEM (tela "Minhas Tarefas")

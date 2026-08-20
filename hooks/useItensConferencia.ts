@@ -35,6 +35,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import { getDatabase } from '@/lib/database';
 import { format } from '@/lib/format';
+import { extrairPrateleira, OPCOES_PISO, pertenceAoPiso } from '@/lib/locacao';
 import { createLogger } from '@/lib/logger';
 import { sync } from '@/lib/sync';
 import type { Contagem, ContagemLog, ItemContagem } from '@/lib/types';
@@ -76,9 +77,34 @@ export interface EstadoItem {
     salvando: boolean;
 }
 
+/** Opção de piso disponível para o filtro da conferência. */
+export interface OpcaoPiso {
+    label: string;
+    value: string;
+}
+
 export interface ItensConferenciaState {
     /** Itens pendentes de conferência, na ordem física da prateleira. */
     itens: ItemContagem[];
+    /**
+     * Itens a exibir: os pendentes recortados pelo filtro de piso/prateleira.
+     *
+     * O filtro é só de exibição — a soma por produto e a conferência continuam
+     * considerando TODAS as localizações, mesmo as escondidas pelo filtro.
+     */
+    itensVisiveis: ItemContagem[];
+    /** Piso selecionado no filtro (`''` = todos). */
+    filtroPiso: string;
+    /** Prateleira selecionada no filtro (`''` = todas). */
+    filtroPrateleira: string;
+    /** Pisos com ao menos um item pendente nesta contagem. */
+    pisosDisponiveis: OpcaoPiso[];
+    /** Prateleiras existentes no piso selecionado. */
+    prateleirasDisponiveis: number[];
+    /** Troca o piso do filtro (limpa a prateleira, que é filtro-filho). */
+    alterarFiltroPiso: (piso: string) => void;
+    /** Troca a prateleira do filtro. */
+    alterarFiltroPrateleira: (prateleira: string) => void;
     /** Estado da conferência por item. */
     estados: Record<string, EstadoItem>;
     /** Carregamento dos dados locais em andamento. */
@@ -152,6 +178,55 @@ export function useItensConferencia(
         () => ordenarPorLocalizacao(todosItens.filter((item) => item.conferir === true)),
         [todosItens],
     );
+
+    // ----------------------------------------------------------------------
+    // Filtro de piso/prateleira (contagem avulsa)
+    // ----------------------------------------------------------------------
+
+    const [filtroPiso, setFiltroPiso] = useState('');
+    const [filtroPrateleira, setFiltroPrateleira] = useState('');
+
+    /** Só oferece os pisos que existem entre os itens pendentes. */
+    const pisosDisponiveis = useMemo<OpcaoPiso[]>(
+        () => OPCOES_PISO
+            .filter((opcao) => itens.some((item) => pertenceAoPiso(item.localizacao, opcao.value)))
+            .map((opcao) => ({ label: opcao.label, value: opcao.value })),
+        [itens],
+    );
+
+    /** Prateleiras existentes no piso selecionado (filtro-filho). */
+    const prateleirasDisponiveis = useMemo<number[]>(() => {
+        if (!filtroPiso) return [];
+
+        const encontradas = new Set<number>();
+        itens.forEach((item) => {
+            if (!pertenceAoPiso(item.localizacao, filtroPiso)) return;
+            const prateleira = extrairPrateleira(item.localizacao);
+            if (prateleira !== null) encontradas.add(prateleira);
+        });
+
+        return Array.from(encontradas).sort((a, b) => a - b);
+    }, [itens, filtroPiso]);
+
+    const itensVisiveis = useMemo(() => {
+        if (!filtroPiso) return itens;
+
+        return itens.filter((item) => {
+            if (!pertenceAoPiso(item.localizacao, filtroPiso)) return false;
+            if (!filtroPrateleira) return true;
+            return extrairPrateleira(item.localizacao) === Number(filtroPrateleira);
+        });
+    }, [itens, filtroPiso, filtroPrateleira]);
+
+    const alterarFiltroPiso = useCallback((piso: string) => {
+        setFiltroPiso(piso);
+        // Prateleira é filtro-filho: muda o piso, as opções mudam junto.
+        setFiltroPrateleira('');
+    }, []);
+
+    const alterarFiltroPrateleira = useCallback((prateleira: string) => {
+        setFiltroPrateleira(prateleira);
+    }, []);
 
     // ----------------------------------------------------------------------
     // Estado dos itens
@@ -423,12 +498,15 @@ export function useItensConferencia(
 
     /**
      * Move o foco para o próximo campo de quantidade habilitado.
+     *
+     * Caminha pela lista VISÍVEL: com o filtro de piso/prateleira ativo, o
+     * próximo campo é o próximo item exibido, não um item escondido.
      */
     const focarProximoInput = useCallback((itemId: string | number) => {
-        const posicao = itens.findIndex((item) => format.sameId(item.id, itemId));
+        const posicao = itensVisiveis.findIndex((item) => format.sameId(item.id, itemId));
         if (posicao === -1) return;
 
-        const proximo = itens.slice(posicao + 1)
+        const proximo = itensVisiveis.slice(posicao + 1)
             .find((item) => !estadosRef.current[String(item.id)]?.bloqueado);
         if (!proximo) return;
 
@@ -437,7 +515,7 @@ export function useItensConferencia(
 
         element.focus();
         element.select();
-    }, [itens]);
+    }, [itensVisiveis]);
 
     const alternarModo = useCallback(async (itemId: string | number) => {
         const item = itens.find((candidato) => format.sameId(candidato.id, itemId));
@@ -541,6 +619,13 @@ export function useItensConferencia(
 
     return {
         itens,
+        itensVisiveis,
+        filtroPiso,
+        filtroPrateleira,
+        pisosDisponiveis,
+        prateleirasDisponiveis,
+        alterarFiltroPiso,
+        alterarFiltroPrateleira,
         estados,
         loading,
         concluindo,

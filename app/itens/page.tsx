@@ -25,7 +25,13 @@ export default function ItensPage() {
     const voltarParaTarefas = useCallback(() => router.push('/contagens'), [router]);
 
     const {
-        itens,
+        itensVisiveis,
+        filtroPiso,
+        filtroPrateleira,
+        pisosDisponiveis,
+        prateleirasDisponiveis,
+        alterarFiltroPiso,
+        alterarFiltroPrateleira,
         estados,
         loading,
         concluindo,
@@ -73,6 +79,11 @@ export default function ItensPage() {
 
     const semItens = totalItens === 0;
     const tudoConferido = !semItens && totalPendentes === 0;
+    // O filtro de piso/prateleira só faz sentido na AVULSA: o conferente escolhe
+    // o trecho do estoque em que está, como no filtro da tela que cria a avulsa.
+    const ehAvulsa = contagem.tipo === 2;
+    const filtroAtivo = filtroPiso !== '';
+    const filtroSemResultado = !loading && filtroAtivo && totalPendentes > 0 && itensVisiveis.length === 0;
 
     return (
         <section className="screen" aria-label="Itens para conferência">
@@ -96,8 +107,47 @@ export default function ItensPage() {
                 <p className="contagem-heading">
                     <span>
                         Contagem #{contagem.contagem} | {totalPendentes} de {totalItens} itens para conferir
+                        {filtroAtivo && ` | ${itensVisiveis.length} no filtro`}
                     </span>
                 </p>
+
+                {ehAvulsa && !loading && totalPendentes > 0 && (
+                    <div className="itens-filtros">
+                        <div className="itens-filtros__campo">
+                            <label htmlFor="filtro-piso">Piso</label>
+                            <select
+                                id="filtro-piso"
+                                value={filtroPiso}
+                                onChange={(event) => alterarFiltroPiso(event.target.value)}
+                            >
+                                <option value="">Todos</option>
+                                {pisosDisponiveis.map((piso) => (
+                                    <option key={piso.value} value={piso.value}>{piso.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="itens-filtros__campo">
+                            <label htmlFor="filtro-prateleira">Prateleira</label>
+                            <select
+                                id="filtro-prateleira"
+                                value={filtroPrateleira}
+                                disabled={!filtroPiso || prateleirasDisponiveis.length === 0}
+                                onChange={(event) => alterarFiltroPrateleira(event.target.value)}
+                            >
+                                <option value="">
+                                    {!filtroPiso
+                                        ? 'Escolha um piso'
+                                        : prateleirasDisponiveis.length === 0
+                                            ? 'Sem prateleiras'
+                                            : 'Todas'}
+                                </option>
+                                {prateleirasDisponiveis.map((prateleira) => (
+                                    <option key={prateleira} value={String(prateleira)}>{prateleira}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                )}
 
                 {loading && <Spinner centered />}
 
@@ -115,7 +165,15 @@ export default function ItensPage() {
                         />
                     )}
 
-                    {!loading && itens.map((item, index) => {
+                    {filtroSemResultado && (
+                        <EmptyState
+                            icon="filter_alt_off"
+                            title="Nenhum item neste filtro"
+                            description="Não há itens pendentes no piso/prateleira selecionado."
+                        />
+                    )}
+
+                    {!loading && itensVisiveis.map((item, index) => {
                         const estado = estados[String(item.id)];
                         if (!estado) return null;
 
