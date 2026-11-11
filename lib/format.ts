@@ -3,6 +3,8 @@
  * @description Conversões e formatações compartilhadas (datas, números, ids).
  */
 
+import type { Contagem } from './types';
+
 /** Opções de exibição de data/hora no padrão brasileiro. */
 const DATE_TIME_OPTIONS: Intl.DateTimeFormatOptions = {
     day: '2-digit',
@@ -57,4 +59,10 @@ export function sameId(a: unknown, b: unknown): boolean {
     return String(a) === String(b);
 }
 
-export const format = { dateTime, toQuantity, sameId };
+/** Título da contagem: `Nº 123 · 1ª contagem`, ou só `1ª contagem` sem o número da sessão. */
+export function tituloContagem(c: Pick<Contagem, 'numero' | 'contagem'>): string {
+    const rodada = `${c.contagem}ª contagem`;
+    return c.numero ? `Nº ${c.numero} · ${rodada}` : rodada;
+}
+
+export const format = { dateTime, toQuantity, sameId, tituloContagem };

@@ -50,8 +50,10 @@ export interface Contagem {
     id: string | number;
     /** Identificador único usado na liberação. */
     contagem_cuid: string;
-    /** Número da contagem. */
+    /** Rodada da contagem (1ª, 2ª ou 3ª) dentro da sessão. */
     contagem: number;
+    /** Número da sessão de contagem; ausente em tarefa salva no aparelho ou cache antigo. */
+    numero?: number | null;
     /** Piso/setor do estoque. */
     piso: string;
     /** Tipo da contagem: `1` = Diária/Rotativa, `2` = Avulsa. */

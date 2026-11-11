@@ -35,7 +35,7 @@ export function ContagemCard({ contagem, index, onOpen }: ContagemCardProps) {
             }}
         >
             <div className="contagem-card__title">
-                <h2 className="contagem-card__title-text">Contagem #{contagem.contagem}</h2>
+                <h2 className="contagem-card__title-text">{format.tituloContagem(contagem)}</h2>
             </div>
             <div className="contagem-card__body">
                 <div className="contagem-info"><strong>Piso:</strong> {contagem.piso || '-'}</div>

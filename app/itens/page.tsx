@@ -17,6 +17,7 @@ import { Spinner } from '@/components/Spinner';
 import { useItensConferencia } from '@/hooks/useItensConferencia';
 import { useSession } from '@/hooks/useSession';
 import { useUnloadGuard } from '@/hooks/useUnloadGuard';
+import { format } from '@/lib/format';
 
 export default function ItensPage() {
     const router = useRouter();
@@ -106,7 +107,7 @@ export default function ItensPage() {
 
                 <p className="contagem-heading">
                     <span>
-                        Contagem #{contagem.contagem} | {totalPendentes} de {totalItens} itens para conferir
+                        {format.tituloContagem(contagem)} | {totalPendentes} de {totalItens} itens para conferir
                         {filtroAtivo && ` | ${itensVisiveis.length} no filtro`}
                     </span>
                 </p>
